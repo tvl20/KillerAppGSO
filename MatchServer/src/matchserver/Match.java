@@ -5,6 +5,7 @@ import shared.IGame;
 import shared.IMatch;
 import shared.IRankingServer;
 import shared.fontyspublisher.RemotePublisher;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -13,12 +14,18 @@ import java.util.List;
 
 public class Match extends UnicastRemoteObject implements IMatch
 {
+    private final int boardWidth = 7;
+    private final int boardHeight = 6;
+    private int[][] board = new int[boardWidth][boardHeight];
+
     private IRankingServer rankingServer;
     private RemotePublisher publisher;
 
     private List<Player> activePlayers;
     private Player currentTurnPlayer;
     private int columnLastTurn = -1;
+
+    private boolean gameWon = false;
 
     public Match(IGame gameClient1, IGame gameClient2, IRankingServer rankingServer) throws RemoteException
     {
@@ -48,7 +55,22 @@ public class Match extends UnicastRemoteObject implements IMatch
     @Override
     public boolean playTurn(int playerSessionID, int column)
     {
-        columnLastTurn = column;
+        if (column < 0 || column >= boardWidth
+                || board[column][boardHeight] != 0
+                || playerSessionID != currentTurnPlayer.getSessionID()
+                || gameWon)
+        {
+            return false;
+        }
+
+        addKeyToBoard(playerSessionID, column);
+
+        gameWon = playerWon();
+        if (gameWon)
+        {
+            // TODO NOTIFY THE CLIENTS THAT THE CURRENT CLIENT WON
+            return false;
+        }
 
         if (activePlayers.get(0).equals(currentTurnPlayer))
         {
@@ -58,6 +80,8 @@ public class Match extends UnicastRemoteObject implements IMatch
         {
             currentTurnPlayer = activePlayers.get(0);
         }
+
+        columnLastTurn = column;
 
         try
         {
@@ -69,6 +93,27 @@ public class Match extends UnicastRemoteObject implements IMatch
             e.printStackTrace();
         }
 
-        return false;
+        return true;
+    }
+
+    private void addKeyToBoard(int sessionID, int column)
+    {
+        // TODO: CHECK IF [0][0] IS THE BOTTOM LEFT OR TOP LEFT
+        int row = 0;
+        while(row < boardHeight)
+        {
+            if (board[column][row] == 0)
+            {
+                board[column][row] = sessionID;
+                return;
+            }
+            row++;
+        }
+    }
+
+    private boolean playerWon()
+    {
+        // TODO WRITE LOGIC THAT LOOKS IF PLAYER WON
+        throw new NotImplementedException();
     }
 }

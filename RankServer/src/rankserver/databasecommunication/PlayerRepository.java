@@ -64,7 +64,7 @@ public class PlayerRepository
         else
         {
             Random rnd = new Random();
-            return rnd.nextInt(1000000);
+            return rnd.nextInt(1000000) + 1; // To ensure the SessionID is never 0
         }
     }
 
