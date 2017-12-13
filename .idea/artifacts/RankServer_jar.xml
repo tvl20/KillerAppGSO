@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="RankServer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/RankServer_jar</output-path>
+    <root id="archive" name="RankServer.jar">
+      <element id="module-output" name="RankServer" />
+      <element id="module-output" name="KillerAppGSO" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/mssql-jdbc-6.2.2.jre8.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

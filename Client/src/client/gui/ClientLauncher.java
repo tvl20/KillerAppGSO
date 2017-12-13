@@ -14,5 +14,9 @@ public class ClientLauncher extends Application
     {
         ClientLauncher application = new ClientLauncher();
         application.appLogic = new AppLogic();
+
+        System.out.println(application.appLogic.logIn("TEST", "POTATO"));
+        System.out.println(application.appLogic.logIn("TES2T", "POTATO"));
+
     }
 }

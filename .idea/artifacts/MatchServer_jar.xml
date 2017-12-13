@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="MatchServer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/MatchServer_jar</output-path>
+    <root id="archive" name="MatchServer.jar">
+      <element id="module-output" name="MatchServer" />
+      <element id="module-output" name="KillerAppGSO" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/mssql-jdbc-6.2.2.jre8.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

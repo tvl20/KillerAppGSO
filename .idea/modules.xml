@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/Client/Client.iml" filepath="$PROJECT_DIR$/Client/Client.iml" />
       <module fileurl="file://$PROJECT_DIR$/KillerAppGSO.iml" filepath="$PROJECT_DIR$/KillerAppGSO.iml" />
+      <module fileurl="file://$PROJECT_DIR$/MatchServer/MatchServer.iml" filepath="$PROJECT_DIR$/MatchServer/MatchServer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/RankServer/RankServer.iml" filepath="$PROJECT_DIR$/RankServer/RankServer.iml" />
     </modules>
   </component>
 </project>
