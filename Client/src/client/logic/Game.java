@@ -1,5 +1,6 @@
 package client.logic;
 
+import com.sun.media.jfxmedia.logging.Logger;
 import javafx.scene.paint.Color;
 import shared.IGame;
 import shared.IMatch;
@@ -25,9 +26,17 @@ public class Game extends UnicastRemoteObject implements IGame
         this.localPlayer = localPlayer;
     }
 
-    public boolean playKey(int Column)
+    public boolean playKey(int column)
     {
-        throw new NotImplementedException();
+        try
+        {
+            return servermatch.playTurn(localPlayer.getSessionID(), column);
+        }
+        catch (RemoteException e)
+        {
+            Logger.logMsg(0, "key could not be played, error reaching server: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override

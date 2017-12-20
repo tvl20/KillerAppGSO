@@ -12,6 +12,9 @@ import java.rmi.registry.Registry;
 
 public class AppLogic implements ILogic
 {
+    // TODO USE DIFFERENT REGISTRIES FOR DIFFERENT COMPONENTS
+    // TODO ONE FOR THE GAME SERVER AND ONE FOR THE RANKING SERVER
+
     private ILoginServer loginServer;
     private IGameServer MatchServer;
     private Game game;
@@ -76,7 +79,7 @@ public class AppLogic implements ILogic
     @Override
     public boolean addMove(int column)
     {
-        return false;
+        return game.playKey(column);
     }
 
     @Override

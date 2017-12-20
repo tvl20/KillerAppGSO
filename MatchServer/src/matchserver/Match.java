@@ -65,6 +65,8 @@ public class Match extends UnicastRemoteObject implements IMatch
 
         addKeyToBoard(playerSessionID, column);
 
+        columnLastTurn = column;
+
         gameWon = playerWon();
         if (gameWon)
         {
@@ -80,8 +82,6 @@ public class Match extends UnicastRemoteObject implements IMatch
         {
             currentTurnPlayer = activePlayers.get(0);
         }
-
-        columnLastTurn = column;
 
         try
         {
@@ -114,6 +114,29 @@ public class Match extends UnicastRemoteObject implements IMatch
     private boolean playerWon()
     {
         // TODO WRITE LOGIC THAT LOOKS IF PLAYER WON
+
+        // Control the top left and bottom right
+
+
+        // Control the top right and bottom left
+
+
+        // Control horizontal
+
+
+        // Control vertical
+
+
         throw new NotImplementedException();
+    }
+
+    private int getPosOnBoard(int column, int row)
+    {
+        if ((column <= -1 || column >= boardWidth)
+                || (row <= -1 || row >= boardHeight))
+        {
+            return -1;
+        }
+        return board[column][row];
     }
 }

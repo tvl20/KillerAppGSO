@@ -26,7 +26,7 @@ public interface IRemotePublisherForListener extends Remote {
      *
      * @param listener remote property listener to be subscribed
      * @param property null-String allowed
-     * @throws java.rmi.RemoteException
+     * @throws RemoteException This is a remote call, therefore an error can occur.
      */
     public void subscribeRemoteListener(IRemotePropertyListener listener, String property)
             throws RemoteException;
@@ -38,7 +38,7 @@ public interface IRemotePublisherForListener extends Remote {
      * 
      * @param listener property listener to be unsubscribed
      * @param property null-String allowed
-     * @throws java.rmi.RemoteException
+     * @throws RemoteException This is a remote call, therefore an error can occur.
      */
     void unsubscribeRemoteListener(IRemotePropertyListener listener, String property)
             throws RemoteException;
