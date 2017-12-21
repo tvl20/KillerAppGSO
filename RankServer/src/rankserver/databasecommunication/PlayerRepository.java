@@ -4,6 +4,7 @@ import shared.Player;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -11,8 +12,10 @@ public class PlayerRepository
 {
     private String connectionString;
 
-    private final String LogincheckQuery = "SELECT PlayerName FROM Players WHERE PlayerName = ? AND PlayerPassword = ?";
-    private final String GetRankQuery = "SELECT PlayerRank FROM Players WHERE PlayerName = ?";
+    private final String loginCheckQuery = "SELECT PlayerName FROM Players WHERE PlayerName = ? AND PlayerPassword = ?";
+    private final String getRankQuery = "SELECT PlayerRank FROM Players WHERE PlayerName = ?";
+    private final String changeRankQuery = "UPDATE Players SET PlayerRank = ? WHERE PlayerName = ?";
+    private final String getAllRanksQuery = "SELECT PlayerName, PlayerRank FROM Players";
 
     public PlayerRepository()
     {
@@ -39,7 +42,7 @@ public class PlayerRepository
     {
         boolean successfulLogin = false;
         try (Connection connection = DriverManager.getConnection(connectionString);
-             PreparedStatement loginStatement = connection.prepareStatement(LogincheckQuery))
+             PreparedStatement loginStatement = connection.prepareStatement(loginCheckQuery))
         {
             loginStatement.setString(1, username);
             loginStatement.setString(2, password);
@@ -80,23 +83,60 @@ public class PlayerRepository
 
     public List<Player> getCurrentRanking()
     {
-        throw new NotImplementedException();
+        List<Player> resultList = new ArrayList<>();
+
+        try (Connection connection = DriverManager.getConnection(connectionString);
+             PreparedStatement getRankStatement = connection.prepareStatement(getAllRanksQuery))
+        {
+            try (ResultSet results = getRankStatement.executeQuery())
+            {
+                while(results.next())
+                {
+                    resultList.add(
+                            new Player(
+                                    results.getString(1),
+                                    results.getInt(2),
+                                    0
+                            )
+                    );
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
+
+        return resultList;
     }
 
     public void changePlayerRankTo(Player player, int newRanking)
     {
-        throw new NotImplementedException();
+        if (player.getSessionID() == 0) return;
+
+        try (Connection connection = DriverManager.getConnection(connectionString);
+             PreparedStatement rankUpdateStatement = connection.prepareStatement(changeRankQuery))
+        {
+            rankUpdateStatement.setString(1, Integer.toString(newRanking));
+            rankUpdateStatement.setString(2, player.getUsername());
+
+            rankUpdateStatement.execute();
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     public int getPlayerRank(String username)
     {
         int playerRank = 0;
         try (Connection connection = DriverManager.getConnection(connectionString);
-             PreparedStatement loginStatement = connection.prepareStatement(GetRankQuery))
+             PreparedStatement getRankStatement = connection.prepareStatement(getRankQuery))
         {
-            loginStatement.setString(1, username);
+            getRankStatement.setString(1, username);
 
-            try (ResultSet results = loginStatement.executeQuery())
+            try (ResultSet results = getRankStatement.executeQuery())
             {
                 while(results.next())
                 {
