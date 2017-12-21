@@ -2,6 +2,7 @@ package client.logic;
 
 import com.sun.media.jfxmedia.logging.Logger;
 import javafx.scene.paint.Color;
+import shared.DTOClientUpdate;
 import shared.IGame;
 import shared.IMatch;
 import shared.Player;
@@ -13,9 +14,11 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class Game extends UnicastRemoteObject implements IGame
 {
+    private Color clientColor = Color.YELLOW;
+    private Color opponentColor = Color.RED;
     private final int boardWidth = 7;
     private final int boardHeight = 6;
-    private Color[][] Board = new Color[boardWidth][boardHeight];
+    private Color[][] board = new Color[boardWidth][boardHeight];
 
     private Player localPlayer;
 
@@ -54,6 +57,37 @@ public class Game extends UnicastRemoteObject implements IGame
     @Override
     public void propertyChange(PropertyChangeEvent evt) throws RemoteException
     {
-        throw new NotImplementedException();
+        DTOClientUpdate update = (DTOClientUpdate) evt.getNewValue();
+
+        if (update.getVictoriousPlayer() != null)
+        {
+            System.out.println("Player won: " + update.getVictoriousPlayer().getUsername());
+        }
+        else
+        {
+            if(update.getCurrentTurnPlayer().equals(this.localPlayer))
+            {
+                addKeyToBoard(opponentColor, update.getColumnLastTurn());
+            }
+            else
+            {
+                addKeyToBoard(clientColor, update.getColumnLastTurn());
+            }
+        }
+    }
+
+    private void addKeyToBoard(Color keyColor, int column)
+    {
+        // TODO: CHECK IF [0][0] IS THE BOTTOM LEFT OR TOP LEFT
+        int row = 0;
+        while(row < boardHeight)
+        {
+            if (board[column][row] == null)
+            {
+                board[column][row] = keyColor;
+                return;
+            }
+            row++;
+        }
     }
 }

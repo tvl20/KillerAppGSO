@@ -1,9 +1,6 @@
 package matchserver;
 
-import shared.Player;
-import shared.IGame;
-import shared.IMatch;
-import shared.IRankingServer;
+import shared.*;
 import shared.fontyspublisher.RemotePublisher;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -23,6 +20,7 @@ public class Match extends UnicastRemoteObject implements IMatch
 
     private List<Player> activePlayers;
     private Player currentTurnPlayer;
+    private Player victoriousPlayer = null;
     private int columnLastTurn = -1;
 
     private boolean gameWon = false;
@@ -41,14 +39,11 @@ public class Match extends UnicastRemoteObject implements IMatch
         publisher.registerProperty("columnLastTurn");
         publisher.registerProperty("currentTurnPlayer");
 
-        publisher.subscribeRemoteListener(gameClient1, "columnLastTurn");
-        publisher.subscribeRemoteListener(gameClient1, "currentTurnPlayer");
+        publisher.subscribeRemoteListener(gameClient1, "clientUpdate");
 
-        publisher.subscribeRemoteListener(gameClient2, "columnLastTurn");
-        publisher.subscribeRemoteListener(gameClient2, "currentTurnPlayer");
+        publisher.subscribeRemoteListener(gameClient2, "clientUpdate");
 
-        publisher.inform("columnLastTurn", null, columnLastTurn);
-        publisher.inform("currentTurnPlayer", null, currentTurnPlayer);
+        publisher.inform("clientUpdate", null, new DTOClientUpdate(columnLastTurn, currentTurnPlayer, victoriousPlayer));
     }
 
     // TODO: TEST FOR WINNER AND BROADCAST THIS
@@ -70,8 +65,7 @@ public class Match extends UnicastRemoteObject implements IMatch
         gameWon = playerWon();
         if (gameWon)
         {
-            // TODO NOTIFY THE CLIENTS THAT THE CURRENT CLIENT WON
-            return false;
+            victoriousPlayer = currentTurnPlayer;
         }
 
         if (activePlayers.get(0).equals(currentTurnPlayer))
@@ -85,8 +79,7 @@ public class Match extends UnicastRemoteObject implements IMatch
 
         try
         {
-            publisher.inform("columnLastTurn", null, columnLastTurn);
-            publisher.inform("currentTurnPlayer", null, currentTurnPlayer);
+            publisher.inform("clientUpdate", null, new DTOClientUpdate(columnLastTurn, currentTurnPlayer, victoriousPlayer));
         }
         catch (RemoteException e)
         {
@@ -113,21 +106,81 @@ public class Match extends UnicastRemoteObject implements IMatch
 
     private boolean playerWon()
     {
-        // TODO WRITE LOGIC THAT LOOKS IF PLAYER WON
+        int rowLength = 1;
+
+        int rowLastTrun = 0;
+        for (int i = 0; i < boardHeight; i++)
+        {
+            if (board[columnLastTurn][i] == 0)
+            {
+                rowLastTrun = i-1;
+            }
+        }
+
+        int counter = 1;
 
         // Control the top left and bottom right
+        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn + counter, rowLastTrun + counter))
+        {
+            rowLength++;
+        }
+        counter = 0;
+        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn - counter, rowLastTrun - counter))
+        {
+            rowLength++;
+        }
 
+        if (rowLength >= 4) return true;
+
+        counter = 0;
+        rowLength = 0;
 
         // Control the top right and bottom left
+        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn - counter, rowLastTrun + counter))
+        {
+            rowLength++;
+        }
+        counter = 0;
+        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn + counter, rowLastTrun - counter))
+        {
+            rowLength++;
+        }
 
+        if (rowLength >= 4) return true;
+
+        counter = 0;
+        rowLength = 0;
 
         // Control horizontal
+        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn - counter, rowLastTrun))
+        {
+            rowLength++;
+        }
+        counter = 0;
+        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn + counter, rowLastTrun))
+        {
+            rowLength++;
+        }
+
+        if (rowLength >= 4) return true;
+
+        counter = 0;
+        rowLength = 0;
 
 
         // Control vertical
+        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn, rowLastTrun - counter))
+        {
+            rowLength++;
+        }
+        counter = 0;
+        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn, rowLastTrun + counter))
+        {
+            rowLength++;
+        }
 
-
-        throw new NotImplementedException();
+        if (rowLength >= 4) return true;
+        return false;
     }
 
     private int getPosOnBoard(int column, int row)
