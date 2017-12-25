@@ -134,13 +134,15 @@ public class GameServer extends UnicastRemoteObject implements IGameServer
                     }
 
                     activeMatches.add(new Match(client, clientOpponent, rankingServer));
+                    clientQueue.remove(client);
+                    clientQueue.remove(clientOpponent);
                 }
                 catch (RemoteException e)
                 {
                     e.printStackTrace();
                 }
             }
-        }, 0, 5000);
+        }, 0, 1000);
     }
 
     @Override

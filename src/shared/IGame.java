@@ -10,9 +10,10 @@ public interface IGame extends Remote, IRemotePropertyListener
     /**
      * Set the server match that will be linked to the local game.
      * @param serverMatch The server match that will be linked.
+     * @param starting Whether this client has to make the first move.
      * @throws RemoteException This is a remote call, therefore an error can occur.
      */
-    void setServerMatch(IMatch serverMatch) throws RemoteException;
+    void setServerMatch(IMatch serverMatch, boolean starting) throws RemoteException;
 
     /**
      * Get the local player object of the game.

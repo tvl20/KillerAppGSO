@@ -16,6 +16,7 @@ public class PlayerRepository
     private final String getRankQuery = "SELECT PlayerRank FROM Players WHERE PlayerName = ?";
     private final String changeRankQuery = "UPDATE Players SET PlayerRank = ? WHERE PlayerName = ?";
     private final String getAllRanksQuery = "SELECT PlayerName, PlayerRank FROM Players";
+    private final String registerUserQuery = "INSERT INTO Players (PlayerName, PlayerPassword) VALUES (?,?)";
 
     public PlayerRepository()
     {
@@ -73,12 +74,30 @@ public class PlayerRepository
 
     public boolean register(String username, String password)
     {
-        if (username.length() >= 256 || password.length() >= 64)
+        // Minimum value of integer means that a player with that name does not yet exist
+        int rank = getPlayerRank(username);
+        if (username.length() >= 256 || password.length() >= 64 || rank != Integer.MIN_VALUE)
         {
+            System.out.println("rank: " + Integer.toString(rank));
             return false;
         }
 
-        throw new NotImplementedException();
+        System.out.println("Creating new account");
+
+        try (Connection connection = DriverManager.getConnection(connectionString);
+             PreparedStatement rankUpdateStatement = connection.prepareStatement(registerUserQuery))
+        {
+            rankUpdateStatement.setString(1, username);
+            rankUpdateStatement.setString(2, password);
+
+            rankUpdateStatement.execute();
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     public List<Player> getCurrentRanking()
@@ -130,7 +149,7 @@ public class PlayerRepository
 
     public int getPlayerRank(String username)
     {
-        int playerRank = 0;
+        int playerRank = Integer.MIN_VALUE;
         try (Connection connection = DriverManager.getConnection(connectionString);
              PreparedStatement getRankStatement = connection.prepareStatement(getRankQuery))
         {

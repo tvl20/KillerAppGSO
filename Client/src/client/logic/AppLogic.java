@@ -1,6 +1,6 @@
 package client.logic;
 
-import shared.IGame;
+import client.gui.IGUI;
 import shared.IGameServer;
 import shared.ILoginServer;
 import shared.Player;
@@ -15,6 +15,8 @@ public class AppLogic implements ILogic
     // TODO USE DIFFERENT REGISTRIES FOR DIFFERENT COMPONENTS
     // TODO ONE FOR THE GAME SERVER AND ONE FOR THE RANKING SERVER
 
+    private final IGUI ui;
+
     private ILoginServer loginServer;
     private IGameServer MatchServer;
     private Game game;
@@ -27,8 +29,10 @@ public class AppLogic implements ILogic
     private final String hostAdress = "localhost";
     private Registry registry;
 
-    public AppLogic()
+    public AppLogic(IGUI ui)
     {
+        this.ui = ui;
+
         // Locate registry at IP address and port number
         try
         {
@@ -88,7 +92,7 @@ public class AppLogic implements ILogic
         try
         {
             localplayer = loginServer.logIn(username, password);
-            game = new Game(localplayer);
+            game = new Game(ui, localplayer);
         }
         catch (RemoteException e)
         {
@@ -102,7 +106,16 @@ public class AppLogic implements ILogic
     @Override
     public boolean register(String username, String password)
     {
-        return false;
+        boolean success = false;
+        try
+        {
+            success = loginServer.register(username, password);
+        }
+        catch (RemoteException e)
+        {
+            e.printStackTrace();
+        }
+        return success;
     }
 
     @Override

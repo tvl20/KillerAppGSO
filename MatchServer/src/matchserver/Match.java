@@ -19,52 +19,59 @@ public class Match extends UnicastRemoteObject implements IMatch
     private RemotePublisher publisher;
 
     private List<Player> activePlayers;
-    private Player currentTurnPlayer;
+    private Player currentTurnPlayer = null;
     private Player victoriousPlayer = null;
     private int columnLastTurn = -1;
+    private int rowLastTurn = -1;
 
     private boolean gameWon = false;
 
     public Match(IGame gameClient1, IGame gameClient2, IRankingServer rankingServer) throws RemoteException
     {
         this.rankingServer = rankingServer;
-        gameClient1.setServerMatch(this);
-        gameClient2.setServerMatch(this);
+        gameClient1.setServerMatch(this, true);
+        gameClient2.setServerMatch(this, false);
 
         activePlayers = new ArrayList<>();
         activePlayers.add(gameClient1.getLocalPlayer());
         activePlayers.add(gameClient2.getLocalPlayer());
 
+        currentTurnPlayer = gameClient1.getLocalPlayer();
+
         publisher = new RemotePublisher();
-        publisher.registerProperty("columnLastTurn");
-        publisher.registerProperty("currentTurnPlayer");
+        publisher.registerProperty("clientUpdate");
 
         publisher.subscribeRemoteListener(gameClient1, "clientUpdate");
 
         publisher.subscribeRemoteListener(gameClient2, "clientUpdate");
 
-        publisher.inform("clientUpdate", null, new DTOClientUpdate(columnLastTurn, currentTurnPlayer, victoriousPlayer));
+        publisher.inform("clientUpdate", null, new DTOClientUpdate(columnLastTurn, rowLastTurn, currentTurnPlayer, victoriousPlayer));
     }
 
-    // TODO: TEST FOR WINNER AND BROADCAST THIS
     @Override
     public boolean playTurn(int playerSessionID, int column)
     {
-        if (column < 0 || column >= boardWidth
-                || board[column][boardHeight] != 0
+        if (column < 0 || column > boardWidth
+                || board[column][boardHeight - 1] != 0
                 || playerSessionID != currentTurnPlayer.getSessionID()
                 || gameWon)
         {
             return false;
         }
 
-        addKeyToBoard(playerSessionID, column);
-
-        columnLastTurn = column;
+        boolean success = addKeyToBoard(playerSessionID, column);
+        if (!success)
+        {
+            System.out.println("Adding a key to the board failed");
+            return false;
+        }
+        System.out.println("Adding a key to the board succeeded");
 
         gameWon = playerWon();
+        System.out.println("Checked for winning player");
         if (gameWon)
         {
+            System.out.println("Player won, round over");
             victoriousPlayer = currentTurnPlayer;
         }
 
@@ -79,7 +86,8 @@ public class Match extends UnicastRemoteObject implements IMatch
 
         try
         {
-            publisher.inform("clientUpdate", null, new DTOClientUpdate(columnLastTurn, currentTurnPlayer, victoriousPlayer));
+            System.out.println("Last key added: " + columnLastTurn + ", " + rowLastTurn);
+            publisher.inform("clientUpdate", null, new DTOClientUpdate(columnLastTurn, rowLastTurn, currentTurnPlayer, victoriousPlayer));
         }
         catch (RemoteException e)
         {
@@ -89,97 +97,104 @@ public class Match extends UnicastRemoteObject implements IMatch
         return true;
     }
 
-    private void addKeyToBoard(int sessionID, int column)
+    private boolean addKeyToBoard(int sessionID, int column)
     {
-        // TODO: CHECK IF [0][0] IS THE BOTTOM LEFT OR TOP LEFT
         int row = 0;
         while(row < boardHeight)
         {
+            System.out.print(board[column][row] + ": ");
+            System.out.println(column + ", " + row);
             if (board[column][row] == 0)
             {
                 board[column][row] = sessionID;
-                return;
+                System.out.println("");
+                rowLastTurn = row;
+                columnLastTurn = column;
+                return true;
             }
             row++;
         }
+        System.out.println("");
+
+        return false;
     }
 
     private boolean playerWon()
     {
-        int rowLength = 1;
-
-        int rowLastTrun = 0;
-        for (int i = 0; i < boardHeight; i++)
-        {
-            if (board[columnLastTurn][i] == 0)
-            {
-                rowLastTrun = i-1;
-            }
-        }
-
-        int counter = 1;
+        int playerSessionID = currentTurnPlayer.getSessionID();
+        int rowLength = -1;
+        int counter = 0;
 
         // Control the top left and bottom right
-        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn + counter, rowLastTrun + counter))
+        while (playerSessionID == getPosOnBoard(columnLastTurn + counter, rowLastTurn + counter))
         {
             rowLength++;
+            counter++;
         }
         counter = 0;
-        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn - counter, rowLastTrun - counter))
+        while (playerSessionID == getPosOnBoard(columnLastTurn - counter, rowLastTurn - counter))
         {
             rowLength++;
+            counter++;
         }
 
         if (rowLength >= 4) return true;
 
+        rowLength = -1;
         counter = 0;
-        rowLength = 0;
 
         // Control the top right and bottom left
-        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn - counter, rowLastTrun + counter))
+        while (playerSessionID == getPosOnBoard(columnLastTurn - counter, rowLastTurn + counter))
         {
             rowLength++;
+            counter++;
         }
         counter = 0;
-        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn + counter, rowLastTrun - counter))
+        while (playerSessionID == getPosOnBoard(columnLastTurn + counter, rowLastTurn - counter))
         {
             rowLength++;
+            counter++;
         }
 
         if (rowLength >= 4) return true;
 
+        rowLength = -1;
         counter = 0;
-        rowLength = 0;
 
         // Control horizontal
-        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn - counter, rowLastTrun))
+        while (playerSessionID == getPosOnBoard(columnLastTurn - counter, rowLastTurn))
         {
             rowLength++;
+            counter++;
         }
         counter = 0;
-        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn + counter, rowLastTrun))
+        while (playerSessionID == getPosOnBoard(columnLastTurn + counter, rowLastTurn))
         {
             rowLength++;
+            counter++;
         }
 
         if (rowLength >= 4) return true;
 
+        rowLength = -1;
         counter = 0;
-        rowLength = 0;
 
 
         // Control vertical
-        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn, rowLastTrun - counter))
+        while (playerSessionID == getPosOnBoard(columnLastTurn, rowLastTurn - counter))
         {
             rowLength++;
+            counter++;
         }
         counter = 0;
-        while (currentTurnPlayer.getSessionID() == getPosOnBoard(columnLastTurn, rowLastTrun + counter))
+        while (playerSessionID == getPosOnBoard(columnLastTurn, rowLastTurn + counter))
         {
             rowLength++;
+            counter++;
         }
 
         if (rowLength >= 4) return true;
+
         return false;
     }
 
