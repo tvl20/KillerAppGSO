@@ -13,11 +13,11 @@ import java.util.List;
 
 public class RankServer extends UnicastRemoteObject implements ILoginServer, IRankingServer
 {
-    private IDatabase database;
+    private transient IDatabase database;
 
     private final String bindingName = "RankServer";
     private final int portNumber = 1099;
-    private Registry registry;
+    private transient Registry registry;
 
     public RankServer(IDatabase database) throws RemoteException
     {
@@ -81,5 +81,39 @@ public class RankServer extends UnicastRemoteObject implements ILoginServer, IRa
     public void rankDown(Player player)
     {
         database.rankDownPlayer(player);
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
+        if (!super.equals(o))
+        {
+            return false;
+        }
+
+        RankServer that = (RankServer) o;
+
+        if (portNumber != that.portNumber)
+        {
+            return false;
+        }
+        return bindingName.equals(that.bindingName);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int result = super.hashCode();
+        result = 31 * result + bindingName.hashCode();
+        result = 31 * result + portNumber;
+        return result;
     }
 }

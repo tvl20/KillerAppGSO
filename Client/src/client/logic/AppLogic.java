@@ -21,12 +21,12 @@ public class AppLogic implements ILogic
     private final IGUI ui;
 
     private ILoginServer loginServer;
-    private IGameServer MatchServer;
+    private IGameServer matchServer;
     private Game game;
     private Player localplayer = null;
 
     private final String rankingServerBindingName = "RankServer";
-    private final String matchServerBindingName = "MatchServer";
+    private final String matchServerBindingName = "matchServer";
 
     private final int portNumber = 1099;
     private final String hostAdress = "localhost";
@@ -46,6 +46,7 @@ public class AppLogic implements ILogic
             System.out.println("Client: Cannot locate registry");
             System.out.println("Client: RemoteException: " + ex.getMessage());
             registry = null;
+            return;
         }
 
         // Get the login server from the registry
@@ -67,18 +68,18 @@ public class AppLogic implements ILogic
 
         try
         {
-            MatchServer = (IGameServer) registry.lookup(matchServerBindingName);
-            System.out.println("MatchServer located");
+            matchServer = (IGameServer) registry.lookup(matchServerBindingName);
+            System.out.println("matchServer located");
         }
         catch (RemoteException e)
         {
             e.printStackTrace();
-            System.out.println("MatchServer couldn't be contacted in the Registry");
+            System.out.println("matchServer couldn't be contacted in the Registry");
         }
         catch (NotBoundException e)
         {
             e.printStackTrace();
-            System.out.println("MatchServer wasn't bound in the Registry");
+            System.out.println("matchServer wasn't bound in the Registry");
         }
     }
 
@@ -131,7 +132,7 @@ public class AppLogic implements ILogic
 
         try
         {
-            MatchServer.joinGameQueue(game);
+            matchServer.joinGameQueue(game);
         }
         catch (RemoteException e)
         {

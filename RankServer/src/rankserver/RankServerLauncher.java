@@ -11,6 +11,7 @@ public class RankServerLauncher
         try
         {
             RankServer rankServer = new RankServer(new DataLayer());
+            System.out.println("done: " + rankServer);
         }
         catch (RemoteException e)
         {

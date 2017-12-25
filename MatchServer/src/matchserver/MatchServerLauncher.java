@@ -9,6 +9,7 @@ public class MatchServerLauncher
         try
         {
             GameServer gameServer = new GameServer();
+            System.out.println("done: " + gameServer);
         }
         catch (RemoteException e)
         {

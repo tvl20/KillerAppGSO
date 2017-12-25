@@ -2,7 +2,6 @@ package matchserver;
 
 import shared.*;
 import shared.fontyspublisher.RemotePublisher;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -12,15 +11,17 @@ import java.util.List;
 
 public class Match extends UnicastRemoteObject implements IMatch
 {
-    private final IGameServerCallback gameServerCallback;
+    private final transient IGameServerCallback gameServerCallback;
 
     private final int boardWidth = 7;
     private final int boardHeight = 6;
     private int[][] board = new int[boardWidth][boardHeight];
 
-    private final IRankingServer rankingServer;
+    private final transient IRankingServer rankingServer;
     private final RemotePublisher publisher;
     private final List<Player> activePlayers;
+
+    private final String clientUpdatePropertyName = "clientUpdate";
 
     private Player currentTurnPlayer = null;
     private Player victoriousPlayer = null;
@@ -44,13 +45,13 @@ public class Match extends UnicastRemoteObject implements IMatch
         currentTurnPlayer = gameClient1.getLocalPlayer();
 
         publisher = new RemotePublisher();
-        publisher.registerProperty("clientUpdate");
+        publisher.registerProperty(clientUpdatePropertyName);
 
-        publisher.subscribeRemoteListener(gameClient1, "clientUpdate");
+        publisher.subscribeRemoteListener(gameClient1, clientUpdatePropertyName);
 
-        publisher.subscribeRemoteListener(gameClient2, "clientUpdate");
+        publisher.subscribeRemoteListener(gameClient2, clientUpdatePropertyName);
 
-        publisher.inform("clientUpdate", null, new DTOClientUpdate(columnLastTurn, rowLastTurn, currentTurnPlayer, victoriousPlayer));
+        publisher.inform(clientUpdatePropertyName, null, new DTOClientUpdate(columnLastTurn, rowLastTurn, currentTurnPlayer, victoriousPlayer));
     }
 
     @Override
@@ -92,7 +93,7 @@ public class Match extends UnicastRemoteObject implements IMatch
         try
         {
             System.out.println("Last key added: " + columnLastTurn + ", " + rowLastTurn);
-            publisher.inform("clientUpdate", null, new DTOClientUpdate(columnLastTurn, rowLastTurn, currentTurnPlayer, victoriousPlayer));
+            publisher.inform(clientUpdatePropertyName, null, new DTOClientUpdate(columnLastTurn, rowLastTurn, currentTurnPlayer, victoriousPlayer));
         }
         catch (RemoteException e)
         {
@@ -222,9 +223,7 @@ public class Match extends UnicastRemoteObject implements IMatch
             counter++;
         }
 
-        if (rowLength >= 4) return true;
-
-        return false;
+        return rowLength >= 4;
     }
 
     private int getPosOnBoard(int column, int row)

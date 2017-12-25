@@ -2,7 +2,6 @@ package matchserver;
 
 import shared.IGame;
 import shared.IGameServer;
-import shared.ILoginServer;
 import shared.IRankingServer;
 
 import java.rmi.NotBoundException;
@@ -17,16 +16,16 @@ import java.util.TimerTask;
 
 public class GameServer extends UnicastRemoteObject implements IGameServer, IGameServerCallback
 {
-    private List<IGame> clientQueue;
-    private List<Match> activeMatches;
+    private transient List<IGame> clientQueue;
+    private transient List<Match> activeMatches;
 
     private final String matchServerBindingName = "MatchServer";
     private final String rankingServerBindingName = "RankServer";
     private final int portNumber = 1099;
     private final String hostAdress = "localhost";
-    private IRankingServer rankingServer;
+    private transient IRankingServer rankingServer;
 
-    private Timer queueTimer;
+    private transient Timer queueTimer;
 
     public GameServer() throws RemoteException
     {
@@ -81,6 +80,23 @@ public class GameServer extends UnicastRemoteObject implements IGameServer, IGam
             System.out.println("Server: RemoteException: " + ex.getMessage());
         }
 
+        setupMatchMakingTimer();
+    }
+
+    @Override
+    public void joinGameQueue(IGame localGame)
+    {
+        clientQueue.add(localGame);
+    }
+
+    @Override
+    public void matchFinished(Match match)
+    {
+        activeMatches.remove(match);
+    }
+
+    private void setupMatchMakingTimer()
+    {
         IGameServerCallback callback = this;
         queueTimer = new Timer();
         queueTimer.scheduleAtFixedRate(new TimerTask()
@@ -147,14 +163,36 @@ public class GameServer extends UnicastRemoteObject implements IGameServer, IGam
     }
 
     @Override
-    public void joinGameQueue(IGame localGame)
+    public boolean equals(Object o)
     {
-        clientQueue.add(localGame);
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
+        if (!super.equals(o))
+        {
+            return false;
+        }
+
+        GameServer that = (GameServer) o;
+
+        if (portNumber != that.portNumber)
+        {
+            return false;
+        }
+        return hostAdress.equals(that.hostAdress);
     }
 
     @Override
-    public void matchFinished(Match match)
+    public int hashCode()
     {
-        activeMatches.remove(match);
+        int result = super.hashCode();
+        result = 31 * result + portNumber;
+        result = 31 * result + hostAdress.hashCode();
+        return result;
     }
 }

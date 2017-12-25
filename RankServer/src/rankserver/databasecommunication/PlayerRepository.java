@@ -1,7 +1,6 @@
 package rankserver.databasecommunication;
 
 import shared.Player;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.sql.*;
 import java.util.ArrayList;

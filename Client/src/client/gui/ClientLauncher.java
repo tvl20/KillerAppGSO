@@ -4,8 +4,6 @@ import client.logic.AppLogic;
 import client.logic.ILogic;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -14,12 +12,8 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
-
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class ClientLauncher extends Application implements IGUI
 {
@@ -69,10 +63,6 @@ public class ClientLauncher extends Application implements IGUI
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(25, 25, 25, 25));
-
-
-        //Debug lines
-//        grid.setGridLinesVisible(true);
 
 
         // Create the board panel element

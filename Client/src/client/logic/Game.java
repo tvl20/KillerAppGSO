@@ -1,7 +1,6 @@
 package client.logic;
 
 import client.gui.IGUI;
-import com.sun.media.jfxmedia.logging.Logger;
 import javafx.application.Platform;
 import javafx.scene.paint.Color;
 import shared.DTOClientUpdate;
@@ -12,10 +11,11 @@ import shared.Player;
 import java.beans.PropertyChangeEvent;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Arrays;
 
 public class Game extends UnicastRemoteObject implements IGame
 {
-    private final IGUI uiFeedback;
+    private final transient IGUI uiFeedback;
 
     private final Color clientColor = Color.YELLOW;
     private final Color opponentColor = Color.RED;
@@ -25,7 +25,7 @@ public class Game extends UnicastRemoteObject implements IGame
 
     private Player localPlayer;
 
-    private IMatch servermatch = null;
+    private transient IMatch servermatch = null;
 
     public Game(IGUI uiFeedback, Player localPlayer) throws RemoteException
     {
@@ -41,7 +41,7 @@ public class Game extends UnicastRemoteObject implements IGame
         }
         catch (RemoteException e)
         {
-            Logger.logMsg(0, "key could not be played, error reaching server: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -100,5 +100,39 @@ public class Game extends UnicastRemoteObject implements IGame
     {
         board[column][row] = keyColor;
         Platform.runLater(() -> uiFeedback.drawKey(column, row + 1, keyColor));
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
+        if (!super.equals(o))
+        {
+            return false;
+        }
+
+        Game game = (Game) o;
+
+        if (!Arrays.deepEquals(board, game.board))
+        {
+            return false;
+        }
+        return getLocalPlayer().equals(game.getLocalPlayer());
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int result = super.hashCode();
+        result = 31 * result + Arrays.deepHashCode(board);
+        result = 31 * result + getLocalPlayer().hashCode();
+        return result;
     }
 }
