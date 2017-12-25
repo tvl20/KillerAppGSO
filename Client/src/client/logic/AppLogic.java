@@ -5,10 +5,13 @@ import shared.IGameServer;
 import shared.ILoginServer;
 import shared.Player;
 
+import java.math.BigInteger;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class AppLogic implements ILogic
 {
@@ -90,7 +93,7 @@ public class AppLogic implements ILogic
     {
         try
         {
-            localplayer = loginServer.logIn(username, password);
+            localplayer = loginServer.logIn(username, generateMD5Hash(password));
             game = new Game(ui, localplayer);
         }
         catch (RemoteException e)
@@ -108,7 +111,7 @@ public class AppLogic implements ILogic
         boolean success = false;
         try
         {
-            success = loginServer.register(username, password);
+            success = loginServer.register(username, generateMD5Hash(password));
         }
         catch (RemoteException e)
         {
@@ -146,6 +149,31 @@ public class AppLogic implements ILogic
         catch (RemoteException e)
         {
             e.printStackTrace();
+        }
+    }
+
+    private String generateMD5Hash(String original)
+    {
+        try
+        {
+            MessageDigest m = MessageDigest.getInstance("MD5");
+            m.reset();
+            m.update(original.getBytes());
+            byte[] digest = m.digest();
+            BigInteger bigInt = new BigInteger(1,digest);
+            StringBuilder hashText = new StringBuilder(bigInt.toString(16));
+
+            // Add 0's to get the complete 32 characters
+            while(hashText.length() < 32 ){
+                hashText.insert(0, "0");
+            }
+
+            return hashText.toString();
+        }
+        catch (NoSuchAlgorithmException e)
+        {
+            e.printStackTrace();
+            return "";
         }
     }
 }

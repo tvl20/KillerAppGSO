@@ -76,7 +76,7 @@ public class PlayerRepository
     {
         // Minimum value of integer means that a player with that name does not yet exist
         int rank = getPlayerRank(username);
-        if (username.length() >= 256 || password.length() >= 64 || rank != Integer.MIN_VALUE)
+        if (username.length() >= 256 || rank != Integer.MIN_VALUE)
         {
             System.out.println("rank: " + Integer.toString(rank));
             return false;
