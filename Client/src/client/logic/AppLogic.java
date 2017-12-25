@@ -62,7 +62,6 @@ public class AppLogic implements ILogic
             System.out.println("LoginServer wasn't bound in the Registry");
         }
 
-        // TODO GET THE GAME SERVER
         try
         {
             MatchServer = (IGameServer) registry.lookup(matchServerBindingName);
@@ -130,6 +129,19 @@ public class AppLogic implements ILogic
         try
         {
             MatchServer.joinGameQueue(game);
+        }
+        catch (RemoteException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void resetLocalGame()
+    {
+        try
+        {
+            game = new Game(ui, localplayer);
         }
         catch (RemoteException e)
         {

@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class GameServer extends UnicastRemoteObject implements IGameServer
+public class GameServer extends UnicastRemoteObject implements IGameServer, IGameServerCallback
 {
     private List<IGame> clientQueue;
     private List<Match> activeMatches;
@@ -81,6 +81,7 @@ public class GameServer extends UnicastRemoteObject implements IGameServer
             System.out.println("Server: RemoteException: " + ex.getMessage());
         }
 
+        IGameServerCallback callback = this;
         queueTimer = new Timer();
         queueTimer.scheduleAtFixedRate(new TimerTask()
         {
@@ -133,7 +134,7 @@ public class GameServer extends UnicastRemoteObject implements IGameServer
                         }
                     }
 
-                    activeMatches.add(new Match(client, clientOpponent, rankingServer));
+                    activeMatches.add(new Match(client, clientOpponent, rankingServer, callback));
                     clientQueue.remove(client);
                     clientQueue.remove(clientOpponent);
                 }
@@ -149,5 +150,11 @@ public class GameServer extends UnicastRemoteObject implements IGameServer
     public void joinGameQueue(IGame localGame)
     {
         clientQueue.add(localGame);
+    }
+
+    @Override
+    public void matchFinished(Match match)
+    {
+        activeMatches.remove(match);
     }
 }

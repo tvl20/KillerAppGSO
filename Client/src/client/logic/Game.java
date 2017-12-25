@@ -64,11 +64,6 @@ public class Game extends UnicastRemoteObject implements IGame
     {
         DTOClientUpdate update = (DTOClientUpdate) evt.getNewValue();
 
-        if (update.getVictoriousPlayer() != null)
-        {
-            System.out.println("Player won: " + update.getVictoriousPlayer().getUsername());
-        }
-
         final int column = update.getColumnLastTurn();
         final int row = update.getRowLastTurn();
         if (column == -1 || row == -1)
@@ -85,9 +80,22 @@ public class Game extends UnicastRemoteObject implements IGame
             addKeyToBoard(clientColor, column, row);
         }
 
+        Player victoriousPlayer = update.getVictoriousPlayer();
+        if (victoriousPlayer != null)
+        {
+            System.out.println("Player won: " + update.getVictoriousPlayer().getUsername());
+
+            if (localPlayer.equals(victoriousPlayer))
+            {
+                Platform.runLater(() -> uiFeedback.won());
+            }
+            else
+            {
+                Platform.runLater(() -> uiFeedback.lost());
+            }
+        }
     }
 
-    // TODO: FIX GAME CRASHING AFTER PUTTING THE 5TH KEY IN A COLUMN
     private void addKeyToBoard(Color keyColor, int column, int row)
     {
         board[column][row] = keyColor;

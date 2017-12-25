@@ -7,18 +7,21 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Match extends UnicastRemoteObject implements IMatch
 {
+    private final IGameServerCallback gameServerCallback;
+
     private final int boardWidth = 7;
     private final int boardHeight = 6;
     private int[][] board = new int[boardWidth][boardHeight];
 
-    private IRankingServer rankingServer;
-    private RemotePublisher publisher;
+    private final IRankingServer rankingServer;
+    private final RemotePublisher publisher;
+    private final List<Player> activePlayers;
 
-    private List<Player> activePlayers;
     private Player currentTurnPlayer = null;
     private Player victoriousPlayer = null;
     private int columnLastTurn = -1;
@@ -26,9 +29,11 @@ public class Match extends UnicastRemoteObject implements IMatch
 
     private boolean gameWon = false;
 
-    public Match(IGame gameClient1, IGame gameClient2, IRankingServer rankingServer) throws RemoteException
+    public Match(IGame gameClient1, IGame gameClient2, IRankingServer rankingServer, IGameServerCallback gameServerCallback) throws RemoteException
     {
+        this.gameServerCallback = gameServerCallback;
         this.rankingServer = rankingServer;
+
         gameClient1.setServerMatch(this, true);
         gameClient2.setServerMatch(this, false);
 
@@ -92,6 +97,30 @@ public class Match extends UnicastRemoteObject implements IMatch
         catch (RemoteException e)
         {
             e.printStackTrace();
+        }
+
+        if (gameWon)
+        {
+            try
+            {
+                rankingServer.rankUp(victoriousPlayer);
+
+                if (victoriousPlayer.equals(activePlayers.get(0)))
+                {
+                    rankingServer.rankDown(activePlayers.get(1));
+                }
+                else
+                {
+                    rankingServer.rankDown(activePlayers.get(0));
+                }
+            }
+            catch (RemoteException e)
+            {
+                e.printStackTrace();
+            }
+
+
+            gameServerCallback.matchFinished(this);
         }
 
         return true;
@@ -206,5 +235,44 @@ public class Match extends UnicastRemoteObject implements IMatch
             return -1;
         }
         return board[column][row];
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
+        if (!super.equals(o))
+        {
+            return false;
+        }
+
+        Match match = (Match) o;
+
+        if (gameWon != match.gameWon)
+        {
+            return false;
+        }
+        if (!Arrays.deepEquals(board, match.board))
+        {
+            return false;
+        }
+        return activePlayers.equals(match.activePlayers);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int result = super.hashCode();
+        result = 31 * result + Arrays.deepHashCode(board);
+        result = 31 * result + activePlayers.hashCode();
+        result = 31 * result + (gameWon ? 1 : 0);
+        return result;
     }
 }

@@ -192,6 +192,8 @@ public class ClientLauncher extends Application implements IGUI
     @Override
     public void startGame(boolean starting)
     {
+        clearPanel();
+
         if (joinGameButton.isVisible())
         {
             joinGameButton.setText("Join Game");
@@ -221,6 +223,44 @@ public class ClientLauncher extends Application implements IGUI
         gc.fillRect(0, 0, colorSquareWidth, colorSquareHeight);
 
         drawGrid();
+    }
+
+    @Override
+    public void won()
+    {
+        // Give the user a notification that he/she has won and reset the logic
+        Alert wonAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        wonAlert.setTitle("You won");
+        wonAlert.show();
+        appLogic.resetLocalGame();
+        started = false;
+        resetUI();
+    }
+
+    @Override
+    public void lost()
+    {
+        // Give the user a notification that he/she has lost and reset the logic
+        Alert wonAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        wonAlert.setTitle("You lost");
+        wonAlert.show();
+        appLogic.resetLocalGame();
+        started = false;
+        resetUI();
+    }
+
+    private void resetUI()
+    {
+        playKeyColumnComboBox.setVisible(false);
+        playKeyButton.setVisible(false);
+        currentPlayerColor.setVisible(false);
+        currentPlayerLabel.setVisible(false);
+        localPlayerColor.setVisible(false);
+        localPlayerLabel.setVisible(false);
+        boardPanel.setVisible(false);
+
+        joinGameButton.setVisible(true);
+        joinGameButton.setDisable(false);
     }
 
     private void clearPanel()
@@ -258,6 +298,7 @@ public class ClientLauncher extends Application implements IGUI
 
         started = true;
         joinGameButton.setText("Joining Game...");
+        joinGameButton.setDisable(true);
 
         appLogic.joinMatch();
     }

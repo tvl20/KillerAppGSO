@@ -29,4 +29,9 @@ public interface ILogic
      * Join the matchmaking queue.
      */
     void joinMatch();
+
+    /**
+     * Resets the local Game object (after a match) so that a new game can be played.
+     */
+    void resetLocalGame();
 }

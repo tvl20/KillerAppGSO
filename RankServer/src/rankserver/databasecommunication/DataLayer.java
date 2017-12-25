@@ -28,13 +28,13 @@ public class DataLayer implements IDatabase
     @Override
     public void rankUpPlayer(Player player)
     {
-        playerRepo.changePlayerRankTo(player, player.getRanking()+1);
+        playerRepo.changePlayerRankTo(player, player.getRanking()+10);
     }
 
     @Override
     public void rankDownPlayer(Player player)
     {
-        playerRepo.changePlayerRankTo(player, player.getRanking()-1);
+        playerRepo.changePlayerRankTo(player, player.getRanking()-10);
     }
 
     @Override
