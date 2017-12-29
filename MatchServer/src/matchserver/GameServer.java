@@ -14,15 +14,20 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * Main class of the Match Server.
+ * This class is added to the registry and is contacted everytime a client wants to join a match.
+ */
 public class GameServer extends UnicastRemoteObject implements IGameServer, IGameServerCallback
 {
     private transient List<IGame> clientQueue;
     private transient List<Match> activeMatches;
 
-    private final String matchServerBindingName = "MatchServer";
-    private final String rankingServerBindingName = "RankServer";
-    private final int portNumber = 1099;
-    private final String hostAdress = "localhost";
+    private static final String matchServerBindingName = "MatchServer";
+    private static final String rankingServerBindingName = "RankServer";
+    private static final int rankServerRegistryPort = 1099;
+    private static final int matchServerRegistryPort = 1100;
+    private static final String rankServerHostAdress = "localhost";
     private transient IRankingServer rankingServer;
 
     private transient Timer queueTimer;
@@ -32,25 +37,25 @@ public class GameServer extends UnicastRemoteObject implements IGameServer, IGam
         clientQueue = new ArrayList<>();
         activeMatches = new ArrayList<>();
 
-        // Locate registry at IP address and port number
-        Registry registry = null;
+        // Locate rankingServerRegistry at IP address and port number
+        Registry rankingServerRegistry = null;
         try
         {
-            registry = LocateRegistry.getRegistry(hostAdress, portNumber);
+            rankingServerRegistry = LocateRegistry.getRegistry(rankServerHostAdress, rankServerRegistryPort);
             System.out.println("Registry located");
         }
         catch (RemoteException ex)
         {
-            System.out.println("Client: Cannot locate registry");
+            System.out.println("Client: Cannot locate rankingServerRegistry");
             System.out.println("Client: RemoteException: " + ex.getMessage());
         }
 
-        // Get the ranking server from the registry
+        // Get the ranking server from the rankingServerRegistry
         try
         {
-            if (registry != null)
+            if (rankingServerRegistry != null)
             {
-                rankingServer = (IRankingServer) registry.lookup(rankingServerBindingName);
+                rankingServer = (IRankingServer) rankingServerRegistry.lookup(rankingServerBindingName);
                 System.out.println("MatchServer located");
             }
         }
@@ -65,18 +70,17 @@ public class GameServer extends UnicastRemoteObject implements IGameServer, IGam
             System.out.println("LoginServer wasn't bound in the Registry");
         }
 
-        // Bind this using registry
+        // Bind this using rankingServerRegistry
         try
         {
-            if (registry != null)
-            {
-                registry.rebind(matchServerBindingName, this);
-                System.out.println("Match Server bound to the registry");
-            }
+            Registry localRegistry = LocateRegistry.createRegistry(matchServerRegistryPort);
+
+            localRegistry.rebind(matchServerBindingName, this);
+            System.out.println("Match Server bound to the matchServerRegistry");
         }
         catch (RemoteException ex)
         {
-            System.out.println("Server: Cannot bind match server to registry");
+            System.out.println("Server: Cannot bind match server to rankingServerRegistry");
             System.out.println("Server: RemoteException: " + ex.getMessage());
         }
 
@@ -180,19 +184,19 @@ public class GameServer extends UnicastRemoteObject implements IGameServer, IGam
 
         GameServer that = (GameServer) o;
 
-        if (portNumber != that.portNumber)
+        if (rankServerRegistryPort != that.rankServerRegistryPort)
         {
             return false;
         }
-        return hostAdress.equals(that.hostAdress);
+        return rankServerHostAdress.equals(that.rankServerHostAdress);
     }
 
     @Override
     public int hashCode()
     {
         int result = super.hashCode();
-        result = 31 * result + portNumber;
-        result = 31 * result + hostAdress.hashCode();
+        result = 31 * result + rankServerRegistryPort;
+        result = 31 * result + rankServerHostAdress.hashCode();
         return result;
     }
 }

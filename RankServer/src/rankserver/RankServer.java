@@ -11,6 +11,11 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 
+/**
+ * Main class of the rank / login server.
+ * This class will be added to a registry,
+ * this class can be used as a login server (ILoginServer) or a rank server (IRankingServer).
+ */
 public class RankServer extends UnicastRemoteObject implements ILoginServer, IRankingServer
 {
     private transient IDatabase database;

@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * This class handles all the database communication related to Players.
+ */
 public class PlayerRepository
 {
     private String connectionString;
@@ -33,10 +36,10 @@ public class PlayerRepository
     }
 
     /**
-     * Check the credentials of a potential login
-     * @param username Login username
-     * @param password Login password
-     * @return the new sessionID of the player, if the login was unsuccessful the returned value will be -1
+     * Check the credentials of a potential login.
+     * @param username Login username.
+     * @param password Login password.
+     * @return the new sessionID of the player, if the login was unsuccessful the returned value will be -1.
      */
     public int logIn(String username, String password)
     {
@@ -71,6 +74,12 @@ public class PlayerRepository
         }
     }
 
+    /**
+     * Register a new account.
+     * @param username Username for the new account.
+     * @param password Password for the new account.
+     * @return Whether or not the creation of the new account has succeeded.
+     */
     public boolean register(String username, String password)
     {
         // Minimum value of integer means that a player with that name does not yet exist
@@ -99,6 +108,10 @@ public class PlayerRepository
         return true;
     }
 
+    /**
+     * Get a list of player objects (with a username and ranking) that represents the current ranking.
+     * @return The list of player objects.
+     */
     public List<Player> getCurrentRanking()
     {
         List<Player> resultList = new ArrayList<>();
@@ -128,6 +141,11 @@ public class PlayerRepository
         return resultList;
     }
 
+    /**
+     * Change the rank of a player.
+     * @param player The player who's rank should be changed.
+     * @param newRanking The new rank of the player.
+     */
     public void changePlayerRankTo(Player player, int newRanking)
     {
         if (player.getSessionID() == 0) return;
@@ -146,6 +164,11 @@ public class PlayerRepository
         }
     }
 
+    /**
+     * Get the rank of a specific player.
+     * @param username Username of that player.
+     * @return The rank of the specified player. If there was no rank found return the minimum value of an Integer.
+     */
     public int getPlayerRank(String username)
     {
         int playerRank = Integer.MIN_VALUE;

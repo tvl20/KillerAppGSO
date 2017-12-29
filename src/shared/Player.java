@@ -2,6 +2,10 @@ package shared;
 
 import java.io.Serializable;
 
+/**
+ * This class represents a player.
+ * This class is also used by the ranking server to create a ranking list of all the players in the database.
+ */
 public class Player implements Serializable
 {
     private String username;
@@ -28,6 +32,12 @@ public class Player implements Serializable
         this.username = username;
         this.ranking = ranking;
         this.sessionID = sessionID;
+    }
+
+    @Override
+    public String toString()
+    {
+        return getUsername() + " - " + Integer.toString(getRanking());
     }
 
     @Override

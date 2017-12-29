@@ -4,6 +4,10 @@ import shared.Player;
 
 import java.util.List;
 
+/**
+ * Main class for the database communication.
+ * This class is the class that keeps track of all the repositories and with those can access the database.
+ */
 public class DataLayer implements IDatabase
 {
     private PlayerRepository playerRepo;

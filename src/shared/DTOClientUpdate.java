@@ -2,6 +2,10 @@ package shared;
 
 import java.io.Serializable;
 
+/**
+ * Data Transfer Object that is used by the server to update the client(s).
+ * This object is used to prevent any synchronisation issues.
+ */
 public class DTOClientUpdate implements Serializable
 {
     private int columnLastTurn;

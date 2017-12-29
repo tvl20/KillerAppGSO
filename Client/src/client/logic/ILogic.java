@@ -1,5 +1,9 @@
 package client.logic;
 
+import shared.Player;
+
+import java.util.List;
+
 public interface ILogic
 {
     /**
@@ -34,4 +38,10 @@ public interface ILogic
      * Resets the local Game object (after a match) so that a new game can be played.
      */
     void resetLocalGame();
+
+    /**
+     * Gets the current ranking from the ranking server
+     * @return A list of player objects with their names and rank filled in.
+     */
+    List<Player> getCurrentRanking();
 }

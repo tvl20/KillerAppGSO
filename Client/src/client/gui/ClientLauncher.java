@@ -13,23 +13,32 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import shared.Player;
+
 import java.util.Arrays;
 
+/**
+ * This class keeps track of all the GUI elements and handling the GUI
+ */
 public class ClientLauncher extends Application implements IGUI
 {
     private boolean started = false;
     private boolean loggedIn = false;
 
-    private final Color clientColor = Color.YELLOW;
-    private final Color opponentColor = Color.RED;
+    private static final Color CLIENT_COLOR = Color.YELLOW;
+    private static final Color OPPONENT_COLOR = Color.RED;
 
     private ILogic appLogic;
 
-    private final int panelWidth = 500;
-    private final int panelHeight = 500;
-    private final double panelGridWidth = (double) panelWidth / 7;
-    private final double panelGridHeight = (double) panelHeight / 6;
+    private static final int PANEL_WIDTH = 500;
+    private static final int PANEL_HEIGHT = 500;
+    private static final double PANEL_GRID_WIDTH = (double) PANEL_WIDTH / 7;
+    private static final double PANEL_GRID_HEIGHT = (double) PANEL_HEIGHT / 6;
     private Canvas boardPanel;
+
+    private Label scoreBoardLabel;
+    private ListView<Player> scoreBoardList;
+    private Button scoreBoardRefreshButton;
 
     private Label usernameLabel;
     private TextField usernameField;
@@ -46,8 +55,8 @@ public class ClientLauncher extends Application implements IGUI
     private Canvas currentPlayerColor;
     private Label localPlayerLabel;
     private Canvas localPlayerColor;
-    private final int colorSquareWidth = 47;
-    private final int colorSquareHeight = 47;
+    private static final int COLOR_SQUARE_WIDTH = 47;
+    private static final int COLOR_SQUARE_HEIGHT = 47;
 
     @Override
     public void start(Stage primaryStage) throws Exception
@@ -66,7 +75,7 @@ public class ClientLauncher extends Application implements IGUI
 
 
         // Create the board panel element
-        boardPanel = new Canvas(panelWidth, panelHeight);
+        boardPanel = new Canvas(PANEL_WIDTH, PANEL_HEIGHT);
         grid.add(boardPanel, 0, 4, 25, 11);
 
         clearPanel();
@@ -81,45 +90,45 @@ public class ClientLauncher extends Application implements IGUI
 
         playKeyButton = new Button("Play Key");
         playKeyButton.setOnAction(event -> playKeyButtonHandler());
-        grid.add(playKeyButton, 2, 1, 1,1);
+        grid.add(playKeyButton, 2, 1, 1, 1);
         playKeyButton.setVisible(false);
 
 
         // To display who's turn it is
         currentPlayerLabel = new Label("Current turn: ");
-        grid.add(currentPlayerLabel, 5,1,1,1);
+        grid.add(currentPlayerLabel, 5, 1, 1, 1);
         currentPlayerLabel.setVisible(false);
 
-        currentPlayerColor = new Canvas(colorSquareWidth, colorSquareHeight);
-        grid.add(currentPlayerColor, 6, 1,1, 1);
+        currentPlayerColor = new Canvas(COLOR_SQUARE_WIDTH, COLOR_SQUARE_HEIGHT);
+        grid.add(currentPlayerColor, 6, 1, 1, 1);
         currentPlayerColor.setVisible(false);
 
 
         // To notify the player what his/her color is
         localPlayerLabel = new Label("Your Color: ");
-        grid.add(localPlayerLabel, 5, 2, 1,1);
+        grid.add(localPlayerLabel, 5, 2, 1, 1);
         localPlayerLabel.setVisible(false);
 
-        localPlayerColor = new Canvas(colorSquareWidth, colorSquareHeight);
-        grid.add(localPlayerColor, 6, 2,1,1);
+        localPlayerColor = new Canvas(COLOR_SQUARE_WIDTH, COLOR_SQUARE_HEIGHT);
+        grid.add(localPlayerColor, 6, 2, 1, 1);
 
         GraphicsContext gc = localPlayerColor.getGraphicsContext2D();
-        gc.setFill(clientColor);
-        gc.fillRect(0,0,colorSquareWidth,colorSquareHeight);
+        gc.setFill(CLIENT_COLOR);
+        gc.fillRect(0, 0, COLOR_SQUARE_WIDTH, COLOR_SQUARE_HEIGHT);
         localPlayerColor.setVisible(false);
 
 
         // Create the Login username elements
         usernameLabel = new Label("Username: ");
-        grid.add(usernameLabel, 1,1,1,1);
+        grid.add(usernameLabel, 1, 1, 1, 1);
 
         usernameField = new TextField();
-        grid.add(usernameField, 2,1,1,1);
+        grid.add(usernameField, 2, 1, 1, 1);
 
 
         // Create the Login password elements
         passwordLabel = new Label("Password: ");
-        grid.add(passwordLabel, 1,2,1,1);
+        grid.add(passwordLabel, 1, 2, 1, 1);
 
         passwordField = new TextField();
         grid.add(passwordField, 2, 2, 1, 1);
@@ -140,13 +149,28 @@ public class ClientLauncher extends Application implements IGUI
         // Create join game button
         joinGameButton = new Button("Join game");
         joinGameButton.setOnAction(event -> joinGameButtonHandler());
-        grid.add(joinGameButton, 1,1,1,1);
+        grid.add(joinGameButton, 1, 1, 1, 1);
         joinGameButton.setVisible(false);
+
+
+        // Create the scoreboard elements
+        scoreBoardLabel = new Label("Scoreboard: (Username - Ranking)");
+        grid.add(scoreBoardLabel, 1, 3, 1, 1);
+        scoreBoardLabel.setVisible(false);
+
+        scoreBoardRefreshButton = new Button("Update scoreboard");
+        scoreBoardRefreshButton.setOnAction(event -> updateScoreBoard());
+        grid.add(scoreBoardRefreshButton, 1, 5, 1, 1);
+        scoreBoardRefreshButton.setVisible(false);
+
+        scoreBoardList = new ListView<>();
+        grid.add(scoreBoardList, 1,4, 3, 10);
+        scoreBoardList.setVisible(false);
 
 
         // Create the scene and add the grid pane
         Group root = new Group();
-        Scene scene = new Scene(root, panelWidth + 50, panelHeight + 330);
+        Scene scene = new Scene(root, PANEL_WIDTH + 50, PANEL_HEIGHT + 330);
         root.getChildren().add(grid);
 
         // Define title and assign the scene for main window
@@ -163,18 +187,18 @@ public class ClientLauncher extends Application implements IGUI
             return;
         }
 
-        if (color.equals(clientColor))
+        if (color.equals(CLIENT_COLOR))
         {
-            setCurrentPlayerColor(opponentColor);
+            setCurrentPlayerColor(OPPONENT_COLOR);
         }
         else
         {
-            setCurrentPlayerColor(clientColor);
+            setCurrentPlayerColor(CLIENT_COLOR);
         }
 
         GraphicsContext gc = boardPanel.getGraphicsContext2D();
         gc.setFill(color);
-        gc.fillRect(panelGridWidth * x, panelGridHeight * (6 - y), panelGridWidth, panelGridHeight);
+        gc.fillRect(PANEL_GRID_WIDTH * x, PANEL_GRID_HEIGHT * (6 - y), PANEL_GRID_WIDTH, PANEL_GRID_HEIGHT);
 
         drawGrid();
     }
@@ -184,33 +208,31 @@ public class ClientLauncher extends Application implements IGUI
     {
         clearPanel();
 
-        if (joinGameButton.isVisible())
-        {
-            joinGameButton.setText("Join Game");
-            joinGameButton.setVisible(false);
-        }
+        scoreBoardLabel.setVisible(false);
+        scoreBoardList.setVisible(false);
+        scoreBoardRefreshButton.setVisible(false);
 
-        if (!boardPanel.isVisible())
-        {
-            boardPanel.setVisible(true);
-            playKeyColumnComboBox.setVisible(true);
-            playKeyButton.setVisible(true);
-            currentPlayerColor.setVisible(true);
-            currentPlayerLabel.setVisible(true);
-            localPlayerColor.setVisible(true);
-            localPlayerLabel.setVisible(true);
-        }
+        joinGameButton.setText("Join Game");
+        joinGameButton.setVisible(false);
+
+        boardPanel.setVisible(true);
+        playKeyColumnComboBox.setVisible(true);
+        playKeyButton.setVisible(true);
+        currentPlayerColor.setVisible(true);
+        currentPlayerLabel.setVisible(true);
+        localPlayerColor.setVisible(true);
+        localPlayerLabel.setVisible(true);
 
         GraphicsContext gc = currentPlayerColor.getGraphicsContext2D();
         if (starting)
         {
-            gc.setFill(clientColor);
+            gc.setFill(CLIENT_COLOR);
         }
         else
         {
-            gc.setFill(opponentColor);
+            gc.setFill(OPPONENT_COLOR);
         }
-        gc.fillRect(0, 0, colorSquareWidth, colorSquareHeight);
+        gc.fillRect(0, 0, COLOR_SQUARE_WIDTH, COLOR_SQUARE_HEIGHT);
 
         drawGrid();
     }
@@ -239,8 +261,18 @@ public class ClientLauncher extends Application implements IGUI
         resetUI();
     }
 
+    /**
+     * Clear the UI to just be the Join Game button and the scoreboard
+     */
     private void resetUI()
     {
+        usernameField.setVisible(false);
+        passwordField.setVisible(false);
+        usernameLabel.setVisible(false);
+        passwordLabel.setVisible(false);
+        logInButton.setVisible(false);
+        registerButton.setVisible(false);
+
         playKeyColumnComboBox.setVisible(false);
         playKeyButton.setVisible(false);
         currentPlayerColor.setVisible(false);
@@ -251,16 +283,32 @@ public class ClientLauncher extends Application implements IGUI
 
         joinGameButton.setVisible(true);
         joinGameButton.setDisable(false);
+
+        scoreBoardLabel.setVisible(true);
+        scoreBoardList.setVisible(true);
+        scoreBoardRefreshButton.setVisible(true);
+        updateScoreBoard();
     }
 
+    private void updateScoreBoard()
+    {
+        scoreBoardList.setItems(FXCollections.observableList(appLogic.getCurrentRanking()));
+    }
+
+    /**
+     * Clears the board canvas
+     */
     private void clearPanel()
     {
         GraphicsContext gc = boardPanel.getGraphicsContext2D();
-        gc.clearRect(0.0, 0.0, panelWidth, panelHeight);
+        gc.clearRect(0.0, 0.0, PANEL_WIDTH, PANEL_HEIGHT);
         gc.setFill(Color.BLACK);
-        gc.fillRect(0.0, 0.0, panelWidth, panelHeight);
+        gc.fillRect(0.0, 0.0, PANEL_WIDTH, PANEL_HEIGHT);
     }
 
+    /**
+     * Draws a grid where the keys will end up getting put into
+     */
     private void drawGrid()
     {
         GraphicsContext gc = boardPanel.getGraphicsContext2D();
@@ -269,13 +317,13 @@ public class ClientLauncher extends Application implements IGUI
 
         for (int i = 0; i < 7; i++)
         {
-            gc.fillText(Integer.toString(i + 1), (panelGridWidth * i) + (panelGridWidth * 0.5), panelHeight);
-            gc.strokeLine(panelGridWidth * i, 0, panelGridWidth * i, panelHeight);
+            gc.fillText(Integer.toString(i + 1), (PANEL_GRID_WIDTH * i) + (PANEL_GRID_WIDTH * 0.5), PANEL_HEIGHT);
+            gc.strokeLine(PANEL_GRID_WIDTH * i, 0, PANEL_GRID_WIDTH * i, PANEL_HEIGHT);
         }
 
         for (int i = 0; i < 6; i++)
         {
-            gc.strokeLine(0, panelGridHeight * i, panelWidth, panelGridHeight * i);
+            gc.strokeLine(0, PANEL_GRID_HEIGHT * i, PANEL_WIDTH, PANEL_GRID_HEIGHT * i);
         }
     }
 
@@ -317,14 +365,7 @@ public class ClientLauncher extends Application implements IGUI
 
         if (loggedIn)
         {
-            usernameField.setVisible(false);
-            passwordField.setVisible(false);
-            usernameLabel.setVisible(false);
-            passwordLabel.setVisible(false);
-            logInButton.setVisible(false);
-            registerButton.setVisible(false);
-
-            joinGameButton.setVisible(true);
+            resetUI();
         }
         else
         {
@@ -384,10 +425,14 @@ public class ClientLauncher extends Application implements IGUI
         }
     }
 
+    /**
+     * Fill the square with the color of the player who's turn it is.
+     * @param playerColor The color of the player who's turn it is.
+     */
     private void setCurrentPlayerColor(Color playerColor)
     {
         GraphicsContext gc = currentPlayerColor.getGraphicsContext2D();
         gc.setFill(playerColor);
-        gc.fillRect(0,0,colorSquareWidth,colorSquareHeight);
+        gc.fillRect(0, 0, COLOR_SQUARE_WIDTH, COLOR_SQUARE_HEIGHT);
     }
 }

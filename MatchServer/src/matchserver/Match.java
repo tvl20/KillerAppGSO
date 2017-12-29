@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * This class represents a single match between 2 clients.
+ */
 public class Match extends UnicastRemoteObject implements IMatch
 {
     private final transient IGameServerCallback gameServerCallback;
@@ -149,6 +152,10 @@ public class Match extends UnicastRemoteObject implements IMatch
         return false;
     }
 
+    /**
+     * Check whether or not a player has won.
+     * @return Boolean if a player has won.
+     */
     private boolean playerWon()
     {
         int playerSessionID = currentTurnPlayer.getSessionID();

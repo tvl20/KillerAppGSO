@@ -12,47 +12,52 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
+/**
+ * This class is the central point of all the logic.
+ * It is also the class the GUI talks to if it needs anything from the logic.
+ */
 public class AppLogic implements ILogic
 {
-    // TODO USE DIFFERENT REGISTRIES FOR DIFFERENT COMPONENTS
-    // TODO ONE FOR THE GAME SERVER AND ONE FOR THE RANKING SERVER
-
     private final IGUI ui;
 
     private ILoginServer loginServer;
     private IGameServer matchServer;
     private Game game;
-    private Player localplayer = null;
+    private Player localPlayer = null;
 
-    private final String rankingServerBindingName = "RankServer";
-    private final String matchServerBindingName = "matchServer";
+    private static final String RANKING_SERVER_BINDING_NAME = "RankServer";
+    private static final String MATCH_SERVER_BINDING_NAME = "MatchServer";
 
-    private final int portNumber = 1099;
-    private final String hostAdress = "localhost";
-    private Registry registry;
+    private static final int RANK_SERVER_BINDING_PORT = 1099;
+    private static final String RANK_SERVER_HOST_ADRESS = "localhost";
+
+    private static final int MATCH_SERVER_BINDING_PORT = 1099;
+    private static final String MATCH_SERVER_HOST_ADRESS = "localhost";
 
     public AppLogic(IGUI ui)
     {
         this.ui = ui;
 
-        // Locate registry at IP address and port number
+        // Locate rankServerRegistry at IP address and port number
+        Registry rankServerRegistry;
         try
         {
-            registry = LocateRegistry.getRegistry(hostAdress, portNumber);
-            System.out.println("Registry located");
+            rankServerRegistry = LocateRegistry.getRegistry(RANK_SERVER_HOST_ADRESS, RANK_SERVER_BINDING_PORT);
+            System.out.println("Rank server registry located");
         } catch (RemoteException ex)
         {
-            System.out.println("Client: Cannot locate registry");
+            System.out.println("Client: Cannot locate rankServerRegistry");
             System.out.println("Client: RemoteException: " + ex.getMessage());
-            registry = null;
+            rankServerRegistry = null;
             return;
         }
 
-        // Get the login server from the registry
+        // Get the login server from the rankServerRegistry
         try
         {
-            loginServer = (ILoginServer) registry.lookup(rankingServerBindingName);
+            loginServer = (ILoginServer) rankServerRegistry.lookup(RANKING_SERVER_BINDING_NAME);
             System.out.println("LoginServer located");
         }
         catch (RemoteException e)
@@ -66,9 +71,23 @@ public class AppLogic implements ILogic
             System.out.println("LoginServer wasn't bound in the Registry");
         }
 
+        // Locate rankServerRegistry at IP address and port number
+        Registry matchServerRegistry;
         try
         {
-            matchServer = (IGameServer) registry.lookup(matchServerBindingName);
+            matchServerRegistry = LocateRegistry.getRegistry(MATCH_SERVER_HOST_ADRESS, MATCH_SERVER_BINDING_PORT);
+            System.out.println("Rank server registry located");
+        } catch (RemoteException ex)
+        {
+            System.out.println("Client: Cannot locate rankServerRegistry");
+            System.out.println("Client: RemoteException: " + ex.getMessage());
+            matchServerRegistry = null;
+            return;
+        }
+
+        try
+        {
+            matchServer = (IGameServer) matchServerRegistry.lookup(MATCH_SERVER_BINDING_NAME);
             System.out.println("matchServer located");
         }
         catch (RemoteException e)
@@ -94,8 +113,8 @@ public class AppLogic implements ILogic
     {
         try
         {
-            localplayer = loginServer.logIn(username, generateMD5Hash(password));
-            game = new Game(ui, localplayer);
+            localPlayer = loginServer.logIn(username, generateMD5Hash(password));
+            game = new Game(ui, localPlayer);
         }
         catch (RemoteException e)
         {
@@ -103,7 +122,7 @@ public class AppLogic implements ILogic
             System.out.println("Unable to login");
         }
 
-        return localplayer != null;
+        return localPlayer != null;
     }
 
     @Override
@@ -124,7 +143,7 @@ public class AppLogic implements ILogic
     @Override
     public void joinMatch()
     {
-        if (localplayer == null)
+        if (localPlayer == null)
         {
             System.out.println("No local player set yet");
             return;
@@ -145,7 +164,7 @@ public class AppLogic implements ILogic
     {
         try
         {
-            game = new Game(ui, localplayer);
+            game = new Game(ui, localPlayer);
         }
         catch (RemoteException e)
         {
@@ -153,6 +172,26 @@ public class AppLogic implements ILogic
         }
     }
 
+    @Override
+    public List<Player> getCurrentRanking()
+    {
+        try
+        {
+            return loginServer.getCurrentRanking();
+        }
+        catch (RemoteException e)
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Generate an MD5 hash to store in the database. (Used for passwords).
+     * (Source: https://stackoverflow.com/a/421696)
+     * @param original The original String that should be turned into MD5.
+     * @return The hashed MD5 String.
+     */
     private String generateMD5Hash(String original)
     {
         try
