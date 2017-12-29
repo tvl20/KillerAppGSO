@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Main class of the Match Server.
@@ -20,14 +22,16 @@ import java.util.TimerTask;
  */
 public class GameServer extends UnicastRemoteObject implements IGameServer, IGameServerCallback
 {
+    private static final Logger DEBUG_LOGGER = Logger.getLogger("debugLogger");
+
     private transient List<IGame> clientQueue;
     private transient List<Match> activeMatches;
 
-    private static final String matchServerBindingName = "MatchServer";
-    private static final String rankingServerBindingName = "RankServer";
-    private static final int rankServerRegistryPort = 1099;
-    private static final int matchServerRegistryPort = 1100;
-    private static final String rankServerHostAdress = "localhost";
+    private static final String MATCH_SERVER_BINDING_NAME = "MatchServer";
+    private static final String RANKING_SERVER_BINDING_NAME = "RankServer";
+    private static final int RANK_SERVER_REGISTRY_PORT = 1099;
+    private static final int MATCH_SERVER_REGISTRY_PORT = 1100;
+    private static final String RANK_SERVER_HOST_ADRESS = "localhost";
     private transient IRankingServer rankingServer;
 
     private transient Timer queueTimer;
@@ -41,13 +45,12 @@ public class GameServer extends UnicastRemoteObject implements IGameServer, IGam
         Registry rankingServerRegistry = null;
         try
         {
-            rankingServerRegistry = LocateRegistry.getRegistry(rankServerHostAdress, rankServerRegistryPort);
-            System.out.println("Registry located");
+            rankingServerRegistry = LocateRegistry.getRegistry(RANK_SERVER_HOST_ADRESS, RANK_SERVER_REGISTRY_PORT);
+            DEBUG_LOGGER.log(Level.INFO, "Registry created");
         }
         catch (RemoteException ex)
         {
-            System.out.println("Client: Cannot locate rankingServerRegistry");
-            System.out.println("Client: RemoteException: " + ex.getMessage());
+            DEBUG_LOGGER.log(Level.SEVERE, "Unable to contact ranking server registry; " + ex.getMessage());
         }
 
         // Get the ranking server from the rankingServerRegistry
@@ -55,33 +58,30 @@ public class GameServer extends UnicastRemoteObject implements IGameServer, IGam
         {
             if (rankingServerRegistry != null)
             {
-                rankingServer = (IRankingServer) rankingServerRegistry.lookup(rankingServerBindingName);
-                System.out.println("MatchServer located");
+                rankingServer = (IRankingServer) rankingServerRegistry.lookup(RANKING_SERVER_BINDING_NAME);
+                DEBUG_LOGGER.log(Level.INFO, "Rank server in registry located.");
             }
         }
         catch (RemoteException e)
         {
-            e.printStackTrace();
-            System.out.println("LoginServer couldn't be contacted in the Registry");
+            DEBUG_LOGGER.log(Level.SEVERE, "LoginServer couldn't be contacted in the Registry; " + e.getMessage());
         }
         catch (NotBoundException e)
         {
-            e.printStackTrace();
-            System.out.println("LoginServer wasn't bound in the Registry");
+            DEBUG_LOGGER.log(Level.SEVERE, "LoginServer wasn't bound in the Registry");
         }
 
-        // Bind this using rankingServerRegistry
+        // Locate and bind this to its own registry
         try
         {
-            Registry localRegistry = LocateRegistry.createRegistry(matchServerRegistryPort);
+            Registry localRegistry = LocateRegistry.createRegistry(MATCH_SERVER_REGISTRY_PORT);
 
-            localRegistry.rebind(matchServerBindingName, this);
-            System.out.println("Match Server bound to the matchServerRegistry");
+            localRegistry.rebind(MATCH_SERVER_BINDING_NAME, this);
+            DEBUG_LOGGER.log(Level.INFO, "Match Server bound to the matchServerRegistry");
         }
         catch (RemoteException ex)
         {
-            System.out.println("Server: Cannot bind match server to rankingServerRegistry");
-            System.out.println("Server: RemoteException: " + ex.getMessage());
+            DEBUG_LOGGER.log(Level.SEVERE, "Could not bind this to the registry; " + ex.getMessage());
         }
 
         setupMatchMakingTimer();
@@ -110,7 +110,6 @@ public class GameServer extends UnicastRemoteObject implements IGameServer, IGam
             {
                 try
                 {
-                    System.out.println("Timer ticked");
                     if (clientQueue.size() < 2)
                     {
                         return;
@@ -123,26 +122,18 @@ public class GameServer extends UnicastRemoteObject implements IGameServer, IGam
                     IGame clientOpponent = clientQueue.get(1);
                     int clientOpponentRank = clientOpponent.getLocalPlayer().getRanking();
 
-                    // Calculate the difference in rank between the selected clients
-                    int rankDifference = clientRank - clientOpponentRank;
-                    if (rankDifference < 0)
-                    {
-                        rankDifference = rankDifference * -1;
-                    }
-
                     if (clientQueue.size() > 2)
                     {
+                        // Calculate the difference in rank between the selected clients
+                        int rankDifference = getRankDifference(clientRank, clientOpponentRank);
+
                         // Go through the other clients in the queue
                         for (int i = 2; i < clientQueue.size(); i++)
                         {
                             IGame possibleOpponent = clientQueue.get(i);
                             int possibleOpponentRank = possibleOpponent.getLocalPlayer().getRanking();
 
-                            int possibleRankDifference = clientRank - possibleOpponentRank;
-                            if (possibleRankDifference < 0)
-                            {
-                                possibleRankDifference = possibleRankDifference * -1;
-                            }
+                            int possibleRankDifference = getRankDifference(clientRank, possibleOpponentRank);
 
                             // If the rank difference between another client in the queue and the originally selected
                             // client is lower select this client as the opponent instead
@@ -160,43 +151,40 @@ public class GameServer extends UnicastRemoteObject implements IGameServer, IGam
                 }
                 catch (RemoteException e)
                 {
-                    e.printStackTrace();
+                    DEBUG_LOGGER.log(Level.SEVERE, "Error contacting player for rank; " + e.getMessage());
                 }
             }
-        }, 0, 1000);
+        }, 0, 3000);
+    }
+
+    /**
+     * Return a positive number of the amount of ranks between the two.
+     * @param playerRank1 Rank 1 for the comparison.
+     * @param playerRank2 Rank 2 for the comparison.
+     * @return A positive number with the rank difference.
+     */
+    private int getRankDifference(int playerRank1, int playerRank2)
+    {
+        int rankDifference = playerRank1 - playerRank2;
+        if (rankDifference < 0)
+        {
+            rankDifference = rankDifference * -1;
+        }
+        return rankDifference;
     }
 
     @Override
     public boolean equals(Object o)
     {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-        if (!super.equals(o))
-        {
-            return false;
-        }
-
-        GameServer that = (GameServer) o;
-
-        if (rankServerRegistryPort != that.rankServerRegistryPort)
-        {
-            return false;
-        }
-        return rankServerHostAdress.equals(that.rankServerHostAdress);
+        return this == o || o != null && getClass() == o.getClass() && super.equals(o);
     }
 
     @Override
     public int hashCode()
     {
         int result = super.hashCode();
-        result = 31 * result + rankServerRegistryPort;
-        result = 31 * result + rankServerHostAdress.hashCode();
+        result = 31 * result + RANK_SERVER_REGISTRY_PORT;
+        result = 31 * result + RANK_SERVER_HOST_ADRESS.hashCode();
         return result;
     }
 }

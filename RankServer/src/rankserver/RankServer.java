@@ -10,6 +10,8 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Main class of the rank / login server.
@@ -18,10 +20,12 @@ import java.util.List;
  */
 public class RankServer extends UnicastRemoteObject implements ILoginServer, IRankingServer
 {
+    private static final Logger DEBUG_LOGGER = Logger.getLogger("debugLogger");
+
     private transient IDatabase database;
 
-    private final String bindingName = "RankServer";
-    private final int portNumber = 1099;
+    private static final String BINDING_NAME = "RankServer";
+    private static final int PORT_NUMBER = 1099;
     private transient Registry registry;
 
     public RankServer(IDatabase database) throws RemoteException
@@ -30,11 +34,11 @@ public class RankServer extends UnicastRemoteObject implements ILoginServer, IRa
 
         // Create registry at port number
         try {
-            registry = LocateRegistry.createRegistry(portNumber);
-            System.out.println("Server: Registry created on port number " + portNumber);
+            registry = LocateRegistry.createRegistry(PORT_NUMBER);
+            String logMsg = String.format("Registry created on port number %d", PORT_NUMBER);
+            DEBUG_LOGGER.log(Level.INFO, logMsg);
         } catch (RemoteException ex) {
-            System.out.println("Server: Cannot create registry");
-            System.out.println("Server: RemoteException: " + ex.getMessage());
+            DEBUG_LOGGER.log(Level.SEVERE, "Cannot create registry; " + ex.getMessage());
             registry = null;
         }
 
@@ -42,12 +46,11 @@ public class RankServer extends UnicastRemoteObject implements ILoginServer, IRa
         try {
             if (registry != null)
             {
-                registry.rebind(bindingName, this);
-                System.out.println("Rank Server bound to the registry");
+                registry.rebind(BINDING_NAME, this);
+                DEBUG_LOGGER.log(Level.INFO, "Rank Server bound to the registry");
             }
         } catch (RemoteException ex) {
-            System.out.println("Server: Cannot bind ranking server to registry");
-            System.out.println("Server: RemoteException: " + ex.getMessage());
+            DEBUG_LOGGER.log(Level.SEVERE, "Cannot bind ranking server to registry; " + ex.getMessage());
         }
     }
 
@@ -91,34 +94,15 @@ public class RankServer extends UnicastRemoteObject implements ILoginServer, IRa
     @Override
     public boolean equals(Object o)
     {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-        if (!super.equals(o))
-        {
-            return false;
-        }
-
-        RankServer that = (RankServer) o;
-
-        if (portNumber != that.portNumber)
-        {
-            return false;
-        }
-        return bindingName.equals(that.bindingName);
+        return this == o || o != null && getClass() == o.getClass() && super.equals(o);
     }
 
     @Override
     public int hashCode()
     {
         int result = super.hashCode();
-        result = 31 * result + bindingName.hashCode();
-        result = 31 * result + portNumber;
+        result = 31 * result + BINDING_NAME.hashCode();
+        result = 31 * result + PORT_NUMBER;
         return result;
     }
 }

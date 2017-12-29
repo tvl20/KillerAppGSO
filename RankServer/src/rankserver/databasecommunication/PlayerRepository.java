@@ -6,19 +6,23 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class handles all the database communication related to Players.
  */
 public class PlayerRepository
 {
+    private static final Logger DEBUG_LOGGER = Logger.getLogger("debugLogger");
+
     private String connectionString;
 
-    private final String loginCheckQuery = "SELECT PlayerName FROM Players WHERE PlayerName = ? AND PlayerPassword = ?";
-    private final String getRankQuery = "SELECT PlayerRank FROM Players WHERE PlayerName = ?";
-    private final String changeRankQuery = "UPDATE Players SET PlayerRank = ? WHERE PlayerName = ?";
-    private final String getAllRanksQuery = "SELECT PlayerName, PlayerRank FROM Players";
-    private final String registerUserQuery = "INSERT INTO Players (PlayerName, PlayerPassword) VALUES (?,?)";
+    private static final String LOGIN_CHECK_QUERY = "SELECT PlayerName FROM Players WHERE PlayerName = ? AND PlayerPassword = ?";
+    private static final String GET_RANK_QUERY = "SELECT PlayerRank FROM Players WHERE PlayerName = ?";
+    private static final String CHANGE_RANK_QUERY = "UPDATE Players SET PlayerRank = ? WHERE PlayerName = ?";
+    private static final String GET_ALL_RANKS_QUERY = "SELECT PlayerName, PlayerRank FROM Players";
+    private static final String REGISTER_USER_QUERY = "INSERT INTO Players (PlayerName, PlayerPassword) VALUES (?,?)";
 
     public PlayerRepository()
     {
@@ -31,7 +35,7 @@ public class PlayerRepository
         }
         catch (ClassNotFoundException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, e.getMessage());
         }
     }
 
@@ -45,7 +49,7 @@ public class PlayerRepository
     {
         boolean successfulLogin = false;
         try (Connection connection = DriverManager.getConnection(connectionString);
-             PreparedStatement loginStatement = connection.prepareStatement(loginCheckQuery))
+             PreparedStatement loginStatement = connection.prepareStatement(LOGIN_CHECK_QUERY))
         {
             loginStatement.setString(1, username);
             loginStatement.setString(2, password);
@@ -60,7 +64,7 @@ public class PlayerRepository
         }
         catch (SQLException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "SQL error in loggin in; " + e.getMessage());
         }
 
         if (!successfulLogin)
@@ -86,14 +90,15 @@ public class PlayerRepository
         int rank = getPlayerRank(username);
         if (username.length() >= 256 || rank != Integer.MIN_VALUE)
         {
-            System.out.println("rank: " + Integer.toString(rank));
+            String logMsg = String.format("Last key added: %d", rank);
+            DEBUG_LOGGER.log(Level.INFO, logMsg);
             return false;
         }
 
-        System.out.println("Creating new account");
+        DEBUG_LOGGER.log(Level.INFO, "Creating new account");
 
         try (Connection connection = DriverManager.getConnection(connectionString);
-             PreparedStatement rankUpdateStatement = connection.prepareStatement(registerUserQuery))
+             PreparedStatement rankUpdateStatement = connection.prepareStatement(REGISTER_USER_QUERY))
         {
             rankUpdateStatement.setString(1, username);
             rankUpdateStatement.setString(2, password);
@@ -102,7 +107,7 @@ public class PlayerRepository
         }
         catch (SQLException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "SQL error in registering new user; " + e.getMessage());
             return false;
         }
         return true;
@@ -117,7 +122,7 @@ public class PlayerRepository
         List<Player> resultList = new ArrayList<>();
 
         try (Connection connection = DriverManager.getConnection(connectionString);
-             PreparedStatement getRankStatement = connection.prepareStatement(getAllRanksQuery))
+             PreparedStatement getRankStatement = connection.prepareStatement(GET_ALL_RANKS_QUERY))
         {
             try (ResultSet results = getRankStatement.executeQuery())
             {
@@ -135,7 +140,7 @@ public class PlayerRepository
         }
         catch (SQLException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "SQL error in getting current ranking; " + e.getMessage());
         }
 
         return resultList;
@@ -151,7 +156,7 @@ public class PlayerRepository
         if (player.getSessionID() == 0) return;
 
         try (Connection connection = DriverManager.getConnection(connectionString);
-             PreparedStatement rankUpdateStatement = connection.prepareStatement(changeRankQuery))
+             PreparedStatement rankUpdateStatement = connection.prepareStatement(CHANGE_RANK_QUERY))
         {
             rankUpdateStatement.setString(1, Integer.toString(newRanking));
             rankUpdateStatement.setString(2, player.getUsername());
@@ -160,7 +165,7 @@ public class PlayerRepository
         }
         catch (SQLException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "SQL error in changing the rank of a player; " + e.getMessage());
         }
     }
 
@@ -173,7 +178,7 @@ public class PlayerRepository
     {
         int playerRank = Integer.MIN_VALUE;
         try (Connection connection = DriverManager.getConnection(connectionString);
-             PreparedStatement getRankStatement = connection.prepareStatement(getRankQuery))
+             PreparedStatement getRankStatement = connection.prepareStatement(GET_RANK_QUERY))
         {
             getRankStatement.setString(1, username);
 
@@ -187,7 +192,7 @@ public class PlayerRepository
         }
         catch (SQLException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "SQL error in getting the rank of a player; " + e.getMessage());
         }
 
         return playerRank;

@@ -3,6 +3,8 @@ package rankserver;
 import rankserver.databasecommunication.DataLayer;
 
 import java.rmi.RemoteException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Launcher for the Rank Server.
@@ -10,16 +12,19 @@ import java.rmi.RemoteException;
  */
 public class RankServerLauncher
 {
+    private static final Logger DEBUG_LOGGER = Logger.getLogger("debugLogger");
+
     public static void main(String[] args)
     {
         try
         {
             RankServer rankServer = new RankServer(new DataLayer());
-            System.out.println("done: " + rankServer);
+            String logMsg = String.format("done: %s", rankServer.toString());
+            DEBUG_LOGGER.log(Level.INFO, logMsg);
         }
         catch (RemoteException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "Error creating Rank Server object; " + e.getMessage());
         }
     }
 }

@@ -12,16 +12,20 @@ import java.beans.PropertyChangeEvent;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Game extends UnicastRemoteObject implements IGame
 {
+    private static final Logger DEBUG_LOGGER = Logger.getLogger("debugLogger");
+
     private final transient IGUI uiFeedback;
 
-    private final Color clientColor = Color.YELLOW;
-    private final Color opponentColor = Color.RED;
-    private final int boardWidth = 7;
-    private final int boardHeight = 6;
-    private Color[][] board = new Color[boardWidth][boardHeight];
+    private static final Color CLIENT_COLOR = Color.YELLOW;
+    private static final Color OPPONENT_COLOR = Color.RED;
+    private static final int BOARD_WIDTH = 7;
+    private static final int BOARD_HEIGHT = 6;
+    private Color[][] board = new Color[BOARD_WIDTH][BOARD_HEIGHT];
 
     private Player localPlayer;
 
@@ -29,21 +33,24 @@ public class Game extends UnicastRemoteObject implements IGame
 
     public Game(IGUI uiFeedback, Player localPlayer) throws RemoteException
     {
+        super();
         this.uiFeedback = uiFeedback;
         this.localPlayer = localPlayer;
     }
 
     public boolean playKey(int column)
     {
+        boolean success;
         try
         {
-            return servermatch.playTurn(localPlayer.getSessionID(), column);
+            success = servermatch.playTurn(localPlayer.getSessionID(), column);
         }
         catch (RemoteException e)
         {
-            e.printStackTrace();
-            return false;
+            DEBUG_LOGGER.log(Level.SEVERE, "Error playing turn; " + e.getMessage());
+            success = false;
         }
+        return success;
     }
 
     @Override
@@ -73,17 +80,17 @@ public class Game extends UnicastRemoteObject implements IGame
 
         if (update.getCurrentTurnPlayer().equals(this.localPlayer))
         {
-            addKeyToBoard(opponentColor, column, row);
+            addKeyToBoard(OPPONENT_COLOR, column, row);
         }
         else
         {
-            addKeyToBoard(clientColor, column, row);
+            addKeyToBoard(CLIENT_COLOR, column, row);
         }
 
         Player victoriousPlayer = update.getVictoriousPlayer();
         if (victoriousPlayer != null)
         {
-            System.out.println("Player won: " + update.getVictoriousPlayer().getUsername());
+            DEBUG_LOGGER.log(Level.INFO, "Player won: " + update.getVictoriousPlayer().getUsername());
 
             if (localPlayer.equals(victoriousPlayer))
             {
@@ -120,11 +127,7 @@ public class Game extends UnicastRemoteObject implements IGame
 
         Game game = (Game) o;
 
-        if (!Arrays.deepEquals(board, game.board))
-        {
-            return false;
-        }
-        return getLocalPlayer().equals(game.getLocalPlayer());
+        return Arrays.deepEquals(board, game.board) && getLocalPlayer().equals(game.getLocalPlayer());
     }
 
     @Override

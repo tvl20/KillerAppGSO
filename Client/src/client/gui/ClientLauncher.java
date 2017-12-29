@@ -16,12 +16,16 @@ import javafx.stage.Stage;
 import shared.Player;
 
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class keeps track of all the GUI elements and handling the GUI
  */
 public class ClientLauncher extends Application implements IGUI
 {
+    private static final Logger DEBUG_LOGGER = Logger.getLogger("debugLogger");
+
     private boolean started = false;
     private boolean loggedIn = false;
 
@@ -63,7 +67,7 @@ public class ClientLauncher extends Application implements IGUI
     {
         // Create the logic of the application
         appLogic = new AppLogic(this);
-        System.out.println(appLogic);
+        DEBUG_LOGGER.log(Level.INFO, "App logic created");
 
 
         // Define grid pane

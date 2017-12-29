@@ -12,7 +12,10 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class is the central point of all the logic.
@@ -20,6 +23,8 @@ import java.util.List;
  */
 public class AppLogic implements ILogic
 {
+    private static final Logger DEBUG_LOGGER = Logger.getLogger("debugLogger");
+
     private final IGUI ui;
 
     private ILoginServer loginServer;
@@ -45,12 +50,10 @@ public class AppLogic implements ILogic
         try
         {
             rankServerRegistry = LocateRegistry.getRegistry(RANK_SERVER_HOST_ADRESS, RANK_SERVER_BINDING_PORT);
-            System.out.println("Rank server registry located");
+            DEBUG_LOGGER.log(Level.INFO, "Rank server registry located");
         } catch (RemoteException ex)
         {
-            System.out.println("Client: Cannot locate rankServerRegistry");
-            System.out.println("Client: RemoteException: " + ex.getMessage());
-            rankServerRegistry = null;
+            DEBUG_LOGGER.log(Level.SEVERE, "Error locating rankServer; RemoteException: " + ex.getMessage());
             return;
         }
 
@@ -58,17 +61,15 @@ public class AppLogic implements ILogic
         try
         {
             loginServer = (ILoginServer) rankServerRegistry.lookup(RANKING_SERVER_BINDING_NAME);
-            System.out.println("LoginServer located");
+            DEBUG_LOGGER.log(Level.INFO, "LoginServer located");
         }
         catch (RemoteException e)
         {
-            e.printStackTrace();
-            System.out.println("LoginServer couldn't be contacted in the Registry");
+            DEBUG_LOGGER.log(Level.SEVERE, "LoginServer couldn't be contacted in the Registry; " + e.getMessage());
         }
         catch (NotBoundException e)
         {
-            e.printStackTrace();
-            System.out.println("LoginServer wasn't bound in the Registry");
+            DEBUG_LOGGER.log(Level.SEVERE, "LoginServer wasn't bound in the Registry; " + e.getMessage());
         }
 
         // Locate rankServerRegistry at IP address and port number
@@ -76,29 +77,25 @@ public class AppLogic implements ILogic
         try
         {
             matchServerRegistry = LocateRegistry.getRegistry(MATCH_SERVER_HOST_ADRESS, MATCH_SERVER_BINDING_PORT);
-            System.out.println("Rank server registry located");
+            DEBUG_LOGGER.log(Level.INFO, "Rank server registry located");
         } catch (RemoteException ex)
         {
-            System.out.println("Client: Cannot locate rankServerRegistry");
-            System.out.println("Client: RemoteException: " + ex.getMessage());
-            matchServerRegistry = null;
+            DEBUG_LOGGER.log(Level.SEVERE, "Cannot locate match server registry; " + ex.getMessage());
             return;
         }
 
         try
         {
             matchServer = (IGameServer) matchServerRegistry.lookup(MATCH_SERVER_BINDING_NAME);
-            System.out.println("matchServer located");
+            DEBUG_LOGGER.log(Level.INFO, "matchServer located");
         }
         catch (RemoteException e)
         {
-            e.printStackTrace();
-            System.out.println("matchServer couldn't be contacted in the Registry");
+            DEBUG_LOGGER.log(Level.SEVERE, "Error contacting match registry; " + e.getMessage());
         }
         catch (NotBoundException e)
         {
-            e.printStackTrace();
-            System.out.println("matchServer wasn't bound in the Registry");
+            DEBUG_LOGGER.log(Level.SEVERE, "MatchServer wasn't bound in the Registry; " + e.getMessage());
         }
     }
 
@@ -118,8 +115,7 @@ public class AppLogic implements ILogic
         }
         catch (RemoteException e)
         {
-            e.printStackTrace();
-            System.out.println("Unable to login");
+            DEBUG_LOGGER.log(Level.SEVERE, "Error contacting login server; " + e.getMessage());
         }
 
         return localPlayer != null;
@@ -135,7 +131,7 @@ public class AppLogic implements ILogic
         }
         catch (RemoteException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "Error contacting login server; " + e.getMessage());
         }
         return success;
     }
@@ -145,7 +141,7 @@ public class AppLogic implements ILogic
     {
         if (localPlayer == null)
         {
-            System.out.println("No local player set yet");
+            DEBUG_LOGGER.log(Level.SEVERE, "No local player set yet.");
             return;
         }
 
@@ -155,7 +151,7 @@ public class AppLogic implements ILogic
         }
         catch (RemoteException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "Error contacting match server; " + e.getMessage());
         }
     }
 
@@ -168,22 +164,23 @@ public class AppLogic implements ILogic
         }
         catch (RemoteException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "Error creating local game object; " + e.getMessage());
         }
     }
 
     @Override
     public List<Player> getCurrentRanking()
     {
+        List<Player> ranking = new ArrayList<>();
         try
         {
-            return loginServer.getCurrentRanking();
+            ranking = loginServer.getCurrentRanking();
         }
         catch (RemoteException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "Error contacting ranking server; " + e.getMessage());
         }
-        return null;
+        return ranking;
     }
 
     /**
@@ -212,7 +209,7 @@ public class AppLogic implements ILogic
         }
         catch (NoSuchAlgorithmException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "Error generating MD5 hash. Algorithm not found.");
             return "";
         }
     }

@@ -8,23 +8,27 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class represents a single match between 2 clients.
  */
 public class Match extends UnicastRemoteObject implements IMatch
 {
+    private static final Logger DEBUG_LOGGER = Logger.getLogger("debugLogger");
+
     private final transient IGameServerCallback gameServerCallback;
 
-    private final int boardWidth = 7;
-    private final int boardHeight = 6;
-    private int[][] board = new int[boardWidth][boardHeight];
+    private static final int BOARD_WIDTH = 7;
+    private static final int BOARD_HEIGHT = 6;
+    private int[][] board = new int[BOARD_WIDTH][BOARD_HEIGHT];
+
+    private static final String CLIENT_UPDATE_PROPERTY_NAME = "clientUpdate";
 
     private final transient IRankingServer rankingServer;
     private final RemotePublisher publisher;
     private final List<Player> activePlayers;
-
-    private final String clientUpdatePropertyName = "clientUpdate";
 
     private Player currentTurnPlayer = null;
     private Player victoriousPlayer = null;
@@ -48,20 +52,20 @@ public class Match extends UnicastRemoteObject implements IMatch
         currentTurnPlayer = gameClient1.getLocalPlayer();
 
         publisher = new RemotePublisher();
-        publisher.registerProperty(clientUpdatePropertyName);
+        publisher.registerProperty(CLIENT_UPDATE_PROPERTY_NAME);
 
-        publisher.subscribeRemoteListener(gameClient1, clientUpdatePropertyName);
+        publisher.subscribeRemoteListener(gameClient1, CLIENT_UPDATE_PROPERTY_NAME);
 
-        publisher.subscribeRemoteListener(gameClient2, clientUpdatePropertyName);
+        publisher.subscribeRemoteListener(gameClient2, CLIENT_UPDATE_PROPERTY_NAME);
 
-        publisher.inform(clientUpdatePropertyName, null, new DTOClientUpdate(columnLastTurn, rowLastTurn, currentTurnPlayer, victoriousPlayer));
+        publisher.inform(CLIENT_UPDATE_PROPERTY_NAME, null, new DTOClientUpdate(columnLastTurn, rowLastTurn, currentTurnPlayer, victoriousPlayer));
     }
 
     @Override
     public boolean playTurn(int playerSessionID, int column)
     {
-        if (column < 0 || column > boardWidth
-                || board[column][boardHeight - 1] != 0
+        if (column < 0 || column > BOARD_WIDTH
+                || board[column][BOARD_HEIGHT - 1] != 0
                 || playerSessionID != currentTurnPlayer.getSessionID()
                 || gameWon)
         {
@@ -71,16 +75,16 @@ public class Match extends UnicastRemoteObject implements IMatch
         boolean success = addKeyToBoard(playerSessionID, column);
         if (!success)
         {
-            System.out.println("Adding a key to the board failed");
+            DEBUG_LOGGER.log(Level.WARNING, "Adding a key to the board failed");
             return false;
         }
-        System.out.println("Adding a key to the board succeeded");
+        DEBUG_LOGGER.log(Level.INFO, "Adding a key to the board succeeded");
 
         gameWon = playerWon();
-        System.out.println("Checked for winning player");
+        DEBUG_LOGGER.log(Level.INFO, "Checked for winning player");
         if (gameWon)
         {
-            System.out.println("Player won, round over");
+            DEBUG_LOGGER.log(Level.INFO, "Player won, round over");
             victoriousPlayer = currentTurnPlayer;
         }
 
@@ -95,12 +99,13 @@ public class Match extends UnicastRemoteObject implements IMatch
 
         try
         {
-            System.out.println("Last key added: " + columnLastTurn + ", " + rowLastTurn);
-            publisher.inform(clientUpdatePropertyName, null, new DTOClientUpdate(columnLastTurn, rowLastTurn, currentTurnPlayer, victoriousPlayer));
+            String logMsg = String.format("Last key added: %d, %d", columnLastTurn, rowLastTurn);
+            DEBUG_LOGGER.log(Level.INFO, logMsg);
+            publisher.inform(CLIENT_UPDATE_PROPERTY_NAME, null, new DTOClientUpdate(columnLastTurn, rowLastTurn, currentTurnPlayer, victoriousPlayer));
         }
         catch (RemoteException e)
         {
-            e.printStackTrace();
+            DEBUG_LOGGER.log(Level.SEVERE, "Error informing other clients; " + e.getMessage());
         }
 
         if (gameWon)
@@ -120,7 +125,7 @@ public class Match extends UnicastRemoteObject implements IMatch
             }
             catch (RemoteException e)
             {
-                e.printStackTrace();
+                DEBUG_LOGGER.log(Level.SEVERE, "Error ranking other clients; " + e.getMessage());
             }
 
 
@@ -133,21 +138,17 @@ public class Match extends UnicastRemoteObject implements IMatch
     private boolean addKeyToBoard(int sessionID, int column)
     {
         int row = 0;
-        while(row < boardHeight)
+        while(row < BOARD_HEIGHT)
         {
-            System.out.print(board[column][row] + ": ");
-            System.out.println(column + ", " + row);
             if (board[column][row] == 0)
             {
                 board[column][row] = sessionID;
-                System.out.println("");
                 rowLastTurn = row;
                 columnLastTurn = column;
                 return true;
             }
             row++;
         }
-        System.out.println("");
 
         return false;
     }
@@ -235,8 +236,8 @@ public class Match extends UnicastRemoteObject implements IMatch
 
     private int getPosOnBoard(int column, int row)
     {
-        if ((column <= -1 || column >= boardWidth)
-                || (row <= -1 || row >= boardHeight))
+        if ((column <= -1 || column >= BOARD_WIDTH)
+                || (row <= -1 || row >= BOARD_HEIGHT))
         {
             return -1;
         }
@@ -265,11 +266,7 @@ public class Match extends UnicastRemoteObject implements IMatch
         {
             return false;
         }
-        if (!Arrays.deepEquals(board, match.board))
-        {
-            return false;
-        }
-        return activePlayers.equals(match.activePlayers);
+        return Arrays.deepEquals(board, match.board) && activePlayers.equals(match.activePlayers);
     }
 
     @Override
