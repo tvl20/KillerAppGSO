@@ -38,7 +38,7 @@ public class AppLogic implements ILogic
     private static final int RANK_SERVER_BINDING_PORT = 1099;
     private static final String RANK_SERVER_HOST_ADRESS = "localhost";
 
-    private static final int MATCH_SERVER_BINDING_PORT = 1099;
+    private static final int MATCH_SERVER_BINDING_PORT = 1100;
     private static final String MATCH_SERVER_HOST_ADRESS = "localhost";
 
     public AppLogic(IGUI ui)

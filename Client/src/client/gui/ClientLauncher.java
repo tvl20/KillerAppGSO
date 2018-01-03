@@ -16,6 +16,8 @@ import javafx.stage.Stage;
 import shared.Player;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -247,6 +249,7 @@ public class ClientLauncher extends Application implements IGUI
         // Give the user a notification that he/she has won and reset the logic
         Alert wonAlert = new Alert(Alert.AlertType.CONFIRMATION);
         wonAlert.setTitle("You won");
+        wonAlert.setHeaderText("You won");
         wonAlert.show();
         appLogic.resetLocalGame();
         started = false;
@@ -257,9 +260,10 @@ public class ClientLauncher extends Application implements IGUI
     public void lost()
     {
         // Give the user a notification that he/she has lost and reset the logic
-        Alert wonAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        wonAlert.setTitle("You lost");
-        wonAlert.show();
+        Alert lostAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        lostAlert.setTitle("You lost");
+        lostAlert.setHeaderText("You lost");
+        lostAlert.show();
         appLogic.resetLocalGame();
         started = false;
         resetUI();
@@ -296,7 +300,9 @@ public class ClientLauncher extends Application implements IGUI
 
     private void updateScoreBoard()
     {
-        scoreBoardList.setItems(FXCollections.observableList(appLogic.getCurrentRanking()));
+        List<Player> sortedScoreList = appLogic.getCurrentRanking();
+        sortedScoreList.sort(Comparator.comparingInt(Player::getRanking));
+        scoreBoardList.setItems(FXCollections.observableList(sortedScoreList));
     }
 
     /**
@@ -375,6 +381,7 @@ public class ClientLauncher extends Application implements IGUI
         {
             Alert invalidMoveAlert = new Alert(Alert.AlertType.ERROR);
             invalidMoveAlert.setTitle("Invalid credentials, try again");
+            invalidMoveAlert.setHeaderText("Invalid credentials, try again");
             invalidMoveAlert.show();
         }
     }
@@ -389,28 +396,25 @@ public class ClientLauncher extends Application implements IGUI
         String name = usernameField.getText();
         String pass = passwordField.getText();
 
-        if (name == null)
-        {
-            name = "";
-        }
+        boolean success = false;
 
-        if (pass == null)
+        if (name != null && pass != null && !name.isEmpty() && !pass.isEmpty() && !name.contains(" ") && !pass.contains(" "))
         {
-            pass = "";
+            success = appLogic.register(name, pass);
         }
-
-        boolean success = appLogic.register(name, pass);
 
         if (success)
         {
             Alert successfulAccountCreation = new Alert(Alert.AlertType.CONFIRMATION);
             successfulAccountCreation.setTitle("Account created");
+            successfulAccountCreation.setHeaderText("Account created");
             successfulAccountCreation.show();
         }
         else
         {
             Alert failedCreatingAccount = new Alert(Alert.AlertType.ERROR);
             failedCreatingAccount.setTitle("Unable to create account, username already registered");
+            failedCreatingAccount.setHeaderText("Unable to create account");
             failedCreatingAccount.show();
         }
     }
@@ -425,6 +429,7 @@ public class ClientLauncher extends Application implements IGUI
         {
             Alert invalidMoveAlert = new Alert(Alert.AlertType.ERROR);
             invalidMoveAlert.setTitle("Invalid Move!");
+            invalidMoveAlert.setHeaderText("Invalid Move!");
             invalidMoveAlert.show();
         }
     }
