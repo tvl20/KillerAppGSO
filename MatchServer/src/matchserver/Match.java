@@ -37,6 +37,21 @@ public class Match extends UnicastRemoteObject implements IMatch
 
     private boolean gameWon = false;
 
+    void setBoard(int[][] board)
+    {
+        this.board = board;
+    }
+
+    public void setColumnLastTurn(int columnLastTurn)
+    {
+        this.columnLastTurn = columnLastTurn;
+    }
+
+    public void setRowLastTurn(int rowLastTurn)
+    {
+        this.rowLastTurn = rowLastTurn;
+    }
+
     public Match(IGame gameClient1, IGame gameClient2, IRankingServer rankingServer, IGameServerCallback gameServerCallback) throws RemoteException
     {
         this.gameServerCallback = gameServerCallback;
@@ -157,7 +172,7 @@ public class Match extends UnicastRemoteObject implements IMatch
      * Check whether or not a player has won.
      * @return Boolean if a player has won.
      */
-    private boolean playerWon()
+    boolean playerWon()
     {
         int playerSessionID = currentTurnPlayer.getSessionID();
         int rowLength = -1;
@@ -216,7 +231,6 @@ public class Match extends UnicastRemoteObject implements IMatch
 
         rowLength = -1;
         counter = 0;
-
 
         // Control vertical
         while (playerSessionID == getPosOnBoard(columnLastTurn, rowLastTurn - counter))

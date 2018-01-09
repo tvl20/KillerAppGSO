@@ -64,6 +64,8 @@ public class ClientLauncher extends Application implements IGUI
     private static final int COLOR_SQUARE_WIDTH = 47;
     private static final int COLOR_SQUARE_HEIGHT = 47;
 
+    private GridPane grid;
+
     @Override
     public void start(Stage primaryStage) throws Exception
     {
@@ -71,14 +73,11 @@ public class ClientLauncher extends Application implements IGUI
         appLogic = new AppLogic(this);
         DEBUG_LOGGER.log(Level.INFO, "App logic created");
 
-
         // Define grid pane
-        GridPane grid;
         grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(25, 25, 25, 25));
-
 
         // Create the board panel element
         boardPanel = new Canvas(PANEL_WIDTH, PANEL_HEIGHT);
@@ -86,6 +85,7 @@ public class ClientLauncher extends Application implements IGUI
 
         clearPanel();
         boardPanel.setVisible(false);
+        boardPanel.setManaged(false);
 
 
         // Combo box with possible columns to put a key into
@@ -93,27 +93,32 @@ public class ClientLauncher extends Application implements IGUI
         playKeyColumnComboBox.setItems(FXCollections.observableList(Arrays.asList(1, 2, 3, 4, 5, 6, 7)));
         grid.add(playKeyColumnComboBox, 1, 1, 1, 1);
         playKeyColumnComboBox.setVisible(false);
+        playKeyColumnComboBox.setManaged(false);
 
         playKeyButton = new Button("Play Key");
         playKeyButton.setOnAction(event -> playKeyButtonHandler());
         grid.add(playKeyButton, 2, 1, 1, 1);
         playKeyButton.setVisible(false);
+        playKeyButton.setManaged(false);
 
 
         // To display who's turn it is
         currentPlayerLabel = new Label("Current turn: ");
         grid.add(currentPlayerLabel, 5, 1, 1, 1);
         currentPlayerLabel.setVisible(false);
+        currentPlayerLabel.setManaged(false);
 
         currentPlayerColor = new Canvas(COLOR_SQUARE_WIDTH, COLOR_SQUARE_HEIGHT);
         grid.add(currentPlayerColor, 6, 1, 1, 1);
         currentPlayerColor.setVisible(false);
+        currentPlayerColor.setManaged(false);
 
 
         // To notify the player what his/her color is
         localPlayerLabel = new Label("Your Color: ");
         grid.add(localPlayerLabel, 5, 2, 1, 1);
         localPlayerLabel.setVisible(false);
+        localPlayerLabel.setManaged(false);
 
         localPlayerColor = new Canvas(COLOR_SQUARE_WIDTH, COLOR_SQUARE_HEIGHT);
         grid.add(localPlayerColor, 6, 2, 1, 1);
@@ -122,6 +127,7 @@ public class ClientLauncher extends Application implements IGUI
         gc.setFill(CLIENT_COLOR);
         gc.fillRect(0, 0, COLOR_SQUARE_WIDTH, COLOR_SQUARE_HEIGHT);
         localPlayerColor.setVisible(false);
+        localPlayerColor.setManaged(false);
 
 
         // Create the Login username elements
@@ -136,7 +142,7 @@ public class ClientLauncher extends Application implements IGUI
         passwordLabel = new Label("Password: ");
         grid.add(passwordLabel, 1, 2, 1, 1);
 
-        passwordField = new TextField();
+        passwordField = new PasswordField();
         grid.add(passwordField, 2, 2, 1, 1);
 
 
@@ -157,26 +163,30 @@ public class ClientLauncher extends Application implements IGUI
         joinGameButton.setOnAction(event -> joinGameButtonHandler());
         grid.add(joinGameButton, 1, 1, 1, 1);
         joinGameButton.setVisible(false);
+        joinGameButton.setManaged(false);
 
 
         // Create the scoreboard elements
         scoreBoardLabel = new Label("Scoreboard: (Username - Ranking)");
         grid.add(scoreBoardLabel, 1, 3, 1, 1);
         scoreBoardLabel.setVisible(false);
+        scoreBoardLabel.setManaged(false);
 
         scoreBoardRefreshButton = new Button("Update scoreboard");
         scoreBoardRefreshButton.setOnAction(event -> updateScoreBoard());
-        grid.add(scoreBoardRefreshButton, 1, 5, 1, 1);
+        grid.add(scoreBoardRefreshButton, 1, 2, 1, 1);
         scoreBoardRefreshButton.setVisible(false);
+        scoreBoardRefreshButton.setManaged(false);
 
         scoreBoardList = new ListView<>();
         grid.add(scoreBoardList, 1,4, 3, 10);
         scoreBoardList.setVisible(false);
+        scoreBoardList.setManaged(false);
 
 
         // Create the scene and add the grid pane
         Group root = new Group();
-        Scene scene = new Scene(root, PANEL_WIDTH + 50, PANEL_HEIGHT + 330);
+        Scene scene = new Scene(root, PANEL_WIDTH + 50, PANEL_HEIGHT + 175);
         root.getChildren().add(grid);
 
         // Define title and assign the scene for main window
@@ -215,19 +225,38 @@ public class ClientLauncher extends Application implements IGUI
         clearPanel();
 
         scoreBoardLabel.setVisible(false);
+        scoreBoardLabel.setManaged(false);
+
         scoreBoardList.setVisible(false);
+        scoreBoardList.setManaged(false);
+
         scoreBoardRefreshButton.setVisible(false);
+        scoreBoardRefreshButton.setManaged(false);
 
         joinGameButton.setText("Join Game");
         joinGameButton.setVisible(false);
+        joinGameButton.setManaged(false);
 
         boardPanel.setVisible(true);
+        boardPanel.setManaged(true);
+
         playKeyColumnComboBox.setVisible(true);
+        playKeyColumnComboBox.setManaged(true);
+
         playKeyButton.setVisible(true);
+        playKeyButton.setManaged(true);
+
         currentPlayerColor.setVisible(true);
+        currentPlayerColor.setManaged(true);
+
         currentPlayerLabel.setVisible(true);
+        currentPlayerLabel.setManaged(true);
+
         localPlayerColor.setVisible(true);
+        localPlayerColor.setManaged(true);
+
         localPlayerLabel.setVisible(true);
+        localPlayerLabel.setManaged(true);
 
         GraphicsContext gc = currentPlayerColor.getGraphicsContext2D();
         if (starting)
@@ -275,26 +304,57 @@ public class ClientLauncher extends Application implements IGUI
     private void resetUI()
     {
         usernameField.setVisible(false);
+        usernameField.setManaged(false);
+
         passwordField.setVisible(false);
+        passwordField.setManaged(false);
+
         usernameLabel.setVisible(false);
+        usernameLabel.setManaged(false);
+
         passwordLabel.setVisible(false);
+        passwordLabel.setManaged(false);
+
         logInButton.setVisible(false);
+        logInButton.setManaged(false);
+
         registerButton.setVisible(false);
+        registerButton.setManaged(false);
 
         playKeyColumnComboBox.setVisible(false);
+        playKeyColumnComboBox.setManaged(false);
+
         playKeyButton.setVisible(false);
+        playKeyButton.setManaged(false);
+
         currentPlayerColor.setVisible(false);
+        currentPlayerColor.setManaged(false);
+
         currentPlayerLabel.setVisible(false);
+        currentPlayerLabel.setManaged(false);
+
         localPlayerColor.setVisible(false);
+        localPlayerColor.setManaged(false);
+
         localPlayerLabel.setVisible(false);
+        localPlayerLabel.setManaged(false);
+
         boardPanel.setVisible(false);
+        boardPanel.setManaged(false);
 
         joinGameButton.setVisible(true);
+        joinGameButton.setManaged(true);
         joinGameButton.setDisable(false);
 
         scoreBoardLabel.setVisible(true);
+        scoreBoardLabel.setManaged(true);
+
         scoreBoardList.setVisible(true);
+        scoreBoardList.setManaged(true);
+
         scoreBoardRefreshButton.setVisible(true);
+        scoreBoardRefreshButton.setManaged(true);
+
         updateScoreBoard();
     }
 
