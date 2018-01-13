@@ -90,7 +90,8 @@ public class Game extends UnicastRemoteObject implements IGame
         Player victoriousPlayer = update.getVictoriousPlayer();
         if (victoriousPlayer != null)
         {
-            DEBUG_LOGGER.log(Level.INFO, "Player won: " + update.getVictoriousPlayer().getUsername());
+            String logMsg = String.format("Player won: %s", update.getVictoriousPlayer().getUsername());
+            DEBUG_LOGGER.log(Level.INFO, logMsg);
 
             if (localPlayer.equals(victoriousPlayer))
             {
