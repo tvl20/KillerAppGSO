@@ -54,6 +54,7 @@ public class AppLogic implements ILogic
         } catch (RemoteException ex)
         {
             DEBUG_LOGGER.log(Level.SEVERE, "Error locating rankServer; RemoteException: " + ex.getMessage());
+            System.exit(1);
             return;
         }
 
@@ -66,10 +67,12 @@ public class AppLogic implements ILogic
         catch (RemoteException e)
         {
             DEBUG_LOGGER.log(Level.SEVERE, "LoginServer couldn't be contacted in the Registry; " + e.getMessage());
+            System.exit(1);
         }
         catch (NotBoundException e)
         {
             DEBUG_LOGGER.log(Level.SEVERE, "LoginServer wasn't bound in the Registry; " + e.getMessage());
+            System.exit(1);
         }
 
         // Locate rankServerRegistry at IP address and port number
@@ -81,6 +84,7 @@ public class AppLogic implements ILogic
         } catch (RemoteException ex)
         {
             DEBUG_LOGGER.log(Level.SEVERE, "Cannot locate match server registry; " + ex.getMessage());
+            System.exit(1);
             return;
         }
 
@@ -92,10 +96,12 @@ public class AppLogic implements ILogic
         catch (RemoteException e)
         {
             DEBUG_LOGGER.log(Level.SEVERE, "Error contacting match registry; " + e.getMessage());
+            System.exit(1);
         }
         catch (NotBoundException e)
         {
             DEBUG_LOGGER.log(Level.SEVERE, "MatchServer wasn't bound in the Registry; " + e.getMessage());
+            System.exit(1);
         }
     }
 
